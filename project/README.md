@@ -19,7 +19,7 @@
   - 首部压缩：HTTP1.1 的请求和响应都是由状态行、请求/响应头部、消息主体三部分组成，状态行和头部却没有经过任何压缩。而 2.0 支持对 header 进行压缩；
   - 服务器推送（server push）,同 SPDY 一样，http2.0 也具有 server push 功能。
 
-- http1.0 和 1.1 的区别：
+- http1.0 和 1.1 的区别： 
 
   - 长连接：http1.1 默认开启长连接
   - 节约带宽：http1.1 支持只发送 header 信息，不带任何 body 信息，服务器觉得有权限：返回 100；无权限返回 401；有权限后再发 body 信息。
@@ -35,29 +35,44 @@
   - E-Tag(http1.1):If-Not-Match（hash 算法）
   - Last-Modified(http1.0):If-Modified-Since:时间点
 
-3. DNS解析：
+3. DNS 解析：
 
-4. options请求：
-- options方法发起请求，响应报文里面包含一个allow首部字段，该字段的值表明了服务器支持的方法；
-- options的预检请求：在cors中，可使用options发起预检请求，返回`Access-Control-Request-Method`即服务器可用的HTTP方法。
+4. options 请求：
 
-5. 怎样不发options请求
-- 跨域资源共享CORS分为简单请求和非简单请求，发送简单请求不会发起options请求
+- options 方法发起请求，响应报文里面包含一个 allow 首部字段，该字段的值表明了服务器支持的方法；
+- options 的预检请求：在 cors 中，可使用 options 发起预检请求，返回`Access-Control-Request-Method`即服务器可用的 HTTP 方法。
+
+5. 怎样不发 options 请求
+
+- 跨域资源共享 CORS 分为简单请求和非简单请求，发送简单请求不会发起 options 请求
 - 简单请求的要素：
-  - 只能是GET POST HEAD
+  - 只能是 GET POST HEAD
   - 请求头：Accept、Accept-Language、Content-type、等等（不能自定义用户信息）
-  - Content-type只能取application/x-www-form-urlencoded、multipart/form-data、text/plain
-  - XMLHTTPRequestUpload对象没有注册事件监听器，没有ReadableStream对象
+  - Content-type 只能取 application/x-www-form-urlencoded、multipart/form-data、text/plain
+  - XMLHTTPRequestUpload 对象没有注册事件监听器，没有 ReadableStream 对象
 - 不满足以上任何一点则为非简单请求
   - PUT、DELETE，不满足
-  - header带用户信息token，不满足
-  - Content-type有些是application/json，不满足
-- 只能减少发起options的次数：
-  - 后端请求头返回 `Access-Control-Max-Age:number`，表示options返回的信息可以缓存多少秒
-  - 不同浏览器有不同的上限，火狐24小时，谷歌10分钟
+  - header 带用户信息 token，不满足
+  - Content-type 有些是 application/json，不满足
+- 只能减少发起 options 的次数：
+  - 后端请求头返回 `Access-Control-Max-Age:number`，表示 options 返回的信息可以缓存多少秒
+  - 不同浏览器有不同的上限，火狐 24 小时，谷歌 10 分钟
 
-6. 同源策略：
+6. 同源策略：协议+域名+端口都要相同，不同的域名指向同一个 ip 地址，也是非同源的。
 
+7. 跨域资源共享（CORS）：服务端设置 Access-Control-Allow-Origin 即可，前端无须设置，若要带 cookie 请求：前后端都需要设置（withCredentials: true）
+
+8. 跨域：
+
+跨域资源共享（CORS）：服务端设置 Access-Control-Allow-Origin 即可，前端无须设置，若要带 cookie 请求：前后端都需要设置（withCredentials: true）
+
+vue 的`proxy`代理跨域 or react 的`http-proxy-middleware`：设置 proxy 代理接口。`webpack.config.js` `vue.config.js` `setupProxy.js`
+
+websocket：`ws`或者`wss`连接标志.websocket 不会受同源策略的约束。
+
+nginx 的反向代理接口：`nginx.config`
+
+`jsonp`、`document.domain+iframe`、`window.name+iframe`、`postMessage`(主要是对于两个不同域名的一些数据的传递，`postMessage(数据,地址)`)
 
 # HTML&CSS
 
@@ -112,7 +127,8 @@
   - animation 强调流程与控制，对元素的一个或多个属性的变化进行控制（animation 与@keyframes 结合使用）
   - transition 强调过渡，是元素的一个或多个属性发生变化时产生的过渡效果。
 
-5. animation参数及算法
+5. animation 参数及算法
+
 - animation-timing-function:使用名伟三次贝塞尔函数的数学函数来生成速度曲线
   - linear：匀速
   - ease：默认，低->加快->慢
@@ -120,7 +136,6 @@
   - ease-out:低速结束
   - ease-in-out：低速开始和结束
   - cubic-beaier(n,n,n,n)贝塞尔函数
-
 
 # JavaScript
 
@@ -586,7 +601,17 @@ e.preventDefault：阻止默认事件，不会阻止事件传递。
   - 2、必要时通过改变 CSS 样式隐藏显示组件，而不是通过条件判断显示隐藏组件。
   - 3、使用 Suspense 和 lazy 进行懒加载
 
-18.
+18. react hook优缺点：
+- 优点：更容易复用代码：通过自定义hooks来复用状态，解决类组件有时候难以复用的逻辑。
+  - 具体：useHook生成一份独立的状态，开辟内存空间。
+  - 与高阶组件对比：高阶组件也能做到，但是对于hooks实现起来代码量少，而且高阶组件太多层，代码会难以阅读。
+  - 写的舒服，清爽的代码风格
+- 缺点：
+  - 响应式的useEffect：useEffect和useCallback等api的第二个参数的触发时机难掌控；
+  - 状态不同步：函数的运行是独立的，有独立的作用域，异步操作的时候，经常会朋友异步回调的变量引用时之前的。（可以通过用UseRef来解决）
+
+19. 高阶组件：
+
 
 # 算法
 
@@ -679,13 +704,13 @@ function throttle(func, wait) {
       timeout = setTimeout(() => {
         func.apply(context, args);
         timeout = null;
-      },wait);
+      }, wait);
     }
   };
 }
 ```
 
-- 
+-
 
 # 其他
 
@@ -739,13 +764,13 @@ function throttle(func, wait) {
 # 性能优化
 
 1. 图片
+
 - 缩短请求响应时间
-  - 浏览器针对同一个域名有并发请求数量限制，可静态资源采用多个子域名，特别是图片域名（京东PC页面用到的商品图片域名就是多个子域名的方法）
+  - 浏览器针对同一个域名有并发请求数量限制，可静态资源采用多个子域名，特别是图片域名（京东 PC 页面用到的商品图片域名就是多个子域名的方法）
   - CDN
 - 减少请求数
   - 缓存（浏览器缓存）
-  - 图片base64编码
+  - 图片 base64 编码
   - 图片懒加载（react-loadLazy）
 - 减少请求大小
-  - 图片使用webp格式：大小缩小30%-50%，懒加载过程中，判断是否支持webp，后期可以优化为：服务器依据请求头是否支持webp，支持则自动返回webp格式的图片。
-
+  - 图片使用 webp 格式：大小缩小 30%-50%，懒加载过程中，判断是否支持 webp，后期可以优化为：服务器依据请求头是否支持 webp，支持则自动返回 webp 格式的图片。
