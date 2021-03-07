@@ -19,7 +19,7 @@
   - 首部压缩：HTTP1.1 的请求和响应都是由状态行、请求/响应头部、消息主体三部分组成，状态行和头部却没有经过任何压缩。而 2.0 支持对 header 进行压缩；
   - 服务器推送（server push）,同 SPDY 一样，http2.0 也具有 server push 功能。
 
-- http1.0 和 1.1 的区别： 
+- http1.0 和 1.1 的区别：
 
   - 长连接：http1.1 默认开启长连接
   - 节约带宽：http1.1 支持只发送 header 信息，不带任何 body 信息，服务器觉得有权限：返回 100；无权限返回 401；有权限后再发 body 信息。
@@ -136,6 +136,27 @@ nginx 的反向代理接口：`nginx.config`
   - ease-out:低速结束
   - ease-in-out：低速开始和结束
   - cubic-beaier(n,n,n,n)贝塞尔函数
+
+6. 选择器
+
+- class 选择器、id 选择器、标签选择器、通配符
+- 多元素选择器 E,F（加逗号）
+- 后代选择器 E F（空格）
+- 子元素选择器 E>F
+- 毗邻元素选择器 E+F
+- 内联 > id > class > 标签 > \*
+- !important
+
+7. 获取 DOM 的方法：
+
+- ID getElementById
+- name 属性 getElementsByName
+- 标签名 getElementsByTagName
+- 类名 getElementsByClassName
+- 选择器获取一个 querySelector
+- 获取一组 querySelectorAll
+- 获取 html：document.documentElement
+- 获取 body：document.body
 
 # JavaScript
 
@@ -457,6 +478,113 @@ for (let item of obj) {
 - Array.isArray(obj);
 - Array.prototype.isPrototypeOf([1,2,3]):判断 Array 是不是在 obj 的原型链上。如果是则返回 true。
 
+12. 解决 setTimeout、setInterval 时间不准的问题:加个时间相减
+
+```js
+const func = (fn, delay) => {
+  let begin = Date.now();
+  return setTimeout(() => {
+    let end = Date.now();
+    if (end - begin >= delay) {
+      fn();
+    }
+  }, 1);
+};
+```
+
+13. 数组去重
+
+```js
+//set,无法去掉{}，{}
+let arr=[];
+Array.from(new Set(arr))
+[...new Set(arr)]
+
+//扁平化去重
+arr.flat(n)//几重就扁平几重
+Array.from(new Set(arr.flat(n)))
+
+//ES5,双层for
+for(var i=0;i<arr.length;i++){
+  for(var j=i+1;j<arr.length;j++){
+    if(arr[i]==arr[j]){
+      arr.splice(j,1);
+      j--;
+    }
+  }
+}
+
+//indexOf，ie不存在
+let newArr=[];
+for(var i=0;i<arr.length;i++){
+  if(newArr.indexOf(arr[i])===-1){
+    newArr.push(arr[i]);
+  }
+}
+
+//map，时间复杂度为o(n),typeof能够解决1和‘1’的问题
+var hash={}
+var res=[]
+for(var i=0 ;i<arr.length;i++){
+  var item=arr[i];
+  var key=typeof(item)+item
+  if(hashpkey!==1){
+    ret.push(item)
+    hash[key]=1;
+  }
+}
+
+//isNaN判断是否是NaN
+//includes,hasOwnProperty
+```
+
+14. for...in 和 for ...of
+
+- for of 是 ES6 的遍历方式，遍历的对象需要含有 iterator 的标志`Symbol(Symbol.iterator)`
+- for of 拿到键值、而 for in 拿到键名
+- for in 会遍历原型链的键值 for of 不会
+
+15. indexOf 实现原理:判断 this，参数是否合法，然后 for 循环进行比对，返回索引 or-1
+
+```js
+Array.prototype.indexOf = function (element, index) {
+  if (this == null) {
+    throw new TypeError("this对象指向的数组不存在");
+  }
+  if (index == null) {
+    index = 0;
+  }
+  if (index < 0) {
+    index = len - 1;
+  }
+  for (let i = index; i < len; i++) {
+    if (element == this[i]) {
+      return i;
+    }
+  }
+};
+return -1;
+```
+
+16. 函数柯里化：多个参数化简为单个参数
+柯里化函数应用：bind
+```js
+function curry(){
+  //类数组转为数组
+  var _args=Array.prototype.slice.call(arguments);
+  var adder=function(){
+    _args.push(...arguments);
+    return adder;
+  };
+  adder.toString=function(){
+    return _args.reduce(function(a,b)=>{
+      return a+b;
+    });
+  }
+  return adder;
+}
+```
+
 # React
 
 1. 什么是虚拟 DOM：
@@ -601,21 +729,185 @@ e.preventDefault：阻止默认事件，不会阻止事件传递。
   - 2、必要时通过改变 CSS 样式隐藏显示组件，而不是通过条件判断显示隐藏组件。
   - 3、使用 Suspense 和 lazy 进行懒加载
 
-18. react hook优缺点：
-- 优点：更容易复用代码：通过自定义hooks来复用状态，解决类组件有时候难以复用的逻辑。
-  - 具体：useHook生成一份独立的状态，开辟内存空间。
-  - 与高阶组件对比：高阶组件也能做到，但是对于hooks实现起来代码量少，而且高阶组件太多层，代码会难以阅读。
+18. react hook 优缺点：
+
+- 优点：更容易复用代码：通过自定义 hooks 来复用状态，解决类组件有时候难以复用的逻辑。
+  - 具体：useHook 生成一份独立的状态，开辟内存空间。
+  - 与高阶组件对比：高阶组件也能做到，但是对于 hooks 实现起来代码量少，而且高阶组件太多层，代码会难以阅读。
   - 写的舒服，清爽的代码风格
 - 缺点：
-  - 响应式的useEffect：useEffect和useCallback等api的第二个参数的触发时机难掌控；
-  - 状态不同步：函数的运行是独立的，有独立的作用域，异步操作的时候，经常会朋友异步回调的变量引用时之前的。（可以通过用UseRef来解决）
+  - 响应式的 useEffect：useEffect 和 useCallback 等 api 的第二个参数的触发时机难掌控；
+  - 状态不同步：函数的运行是独立的，有独立的作用域，异步操作的时候，经常会朋友异步回调的变量引用时之前的。（可以通过用 UseRef 来解决）
 
 19. 高阶组件：
+
+20. 通信方式：
+
+
+# Vue
+1. MVVM:
+- 后端mvc模式：view、model、controller（控制层，做某件事的控制）
+- 为什么要有这模式：目的、职责划分、分层，借鉴后端思想。对于前端而言就是如何将数据同步到页面上；
+- 自动映射数据到视图上；(简化隐藏controller)
+
+2. Vue2以及Vue3响应式数据的理解
+- 响应式数据：
+  - vue2: `object.defineProperty`,对于一个对象，通过遍历、递归，将对象中的属性重写get、set方法。
+  - vue2: 数组是通过重写数组方法来实现
+  - vue2: 多层对象是通过递归来实现劫持
+  - vue3: 判断取值是不是对象，是则进行代理proxy,取到某个值的时候，再进行代理(懒代理)。兼容性不好
+
+```js
+构造函数调用init方法->initdata->observe->数组、对象分开,深度递归->defineRative->object.defineProperty
+```
+- 双向绑定
+
+3. vue中如何检测数组变化
+- 重写数组方法（push、shift、pop、splice、unshift、sort、reverse）函数劫持
+- 数组中如果是对象数据类型，也会进行递归挟持
+- 数组的索引和长度变化是无法监控到的
+- vue3的proxy天生支持数据劫持。
+```js
+const oldArray=Object.create(Array.prototype);
+function test(){
+
+}
+```
+4. Vue中如何进行依赖收集
+- 每个属性都拥有自己的dep属性、存档他所依赖的watcher、当属性变化后，会通知对应的watcher去更新
+- 默认在初始化时会调用render函数、此时会触发依赖收集
+- 当属性发生修改时，会触发watcher更新dep.notify()
+- 当一个组件在渲染时，会触发get方法、那么就会把这个组件放到这个属性的dep中。也就是dep中存放的所有依赖这个属性的组件。当改变这个属性，会触发set，这个时候循环调用dep中的所有项，来重新渲染这些依赖的组件。
+
+5. Vue中模板编译原理
+- template->ast树（parseHTML（对template进行循环，把摸板换成ast树，ast树是一个对象，有children等等，有点像虚拟DOM，但属性不一样）->对ast树进行标记、标记静态节点（diff优化）（递归标记，对象里面的static属性：trueorfalse）->生成代码（render函数（with语法，取值方便），对象）
+
+6. Vue生命周期钩子是如何实现的
+- 回调函数，将所有的生命周期维护成一个数组，然后依次执行，将生命周期中的用一个beforeCreate，丢进去一个数组，然后数组遍历执行。
+- vue.options会放置了全局的所有属性（例如vue.mixin中的东西，data的东西）
+```js
+vue.mixin({
+  beforeCreate("sss");
+})
+const vm=new Vue({
+  el:"#app",
+  beforeCreate("ss222");
+})
+```
+
+7. Vue的生命周期方法有哪些？一般在哪一步发送请求及原因
+
+8. Vue.mixin的使用场景和原理
+- 共享数据的方案：mixin：抽离公共的业务逻辑，组件初始化时调用mergeOptions方法进行合并（放到Vue.options），采用策略模式针对不同的属性进行合并。数据冲突，采用就近原则。
+- 命名冲突问题，依赖问题，数据来源问题。
+
+9. Vue组件data为什么必须是个函数
+- 为什么不能是对象：在Vue.extend的时候，创建构造函数，extend会合并对象，把父类的data和子类的data进行合并，放在Vue实例中（只有一个Vue实例，全局new了一个Vue）
+- 组件的渲染流程：Vue.component--内部调用-->Vue.extend（继承，传入options，生成组件构造函数，即子类）->子类->new 子类
+10. nextTick在哪里使用
+- 是在下次DOM更新循环结束之后执行的延迟回调
+- 是异步的，但是将内容维护到一个数组里面，最终按顺序执行（属性更新为a—>nextTick(获取值为a，而不是b)->属性更新为b）（数据是异步更新，所以nextTick为了拿到新数据，它也是异步更新）
+- 用于更新后的DOM
+- 第一次是异步，第二次往数组里面放，最后执行flushCallBack方法循环数组执行。
+11. computed和watcher的区别（功能不同，实现原理相同都是watcher（dep发布订阅模式））
+- computed和watch都是基于Watcher来实现的（computed是取值时才执行（写成一个函数，然后defineProperty对应的属性的时候，进行调用该函数（类似get函数）），watch是（数据一改，则直接执行对应的方法））
+- 访问代理函数，代理函数里面通过watcher.dirty判断是取缓存还是重新计算。
+- dirty在哪里设置的：在watcher设置的
+- computed是具备缓存的，依赖的值不发生变化，则不会重新计算
+- watch是监控值的变化，一变就会执行回调
+
+- 用户(就是我们写的watch)、组件（template中的）、计算属性三种watcher
+
+12. Vue.set是怎么实现的（vm.$set(vm.user,age,11) || vm.$set(vm.user,1,11)）（可以用set去更新数组索引）
+- 数组和对象都增加了dep属性，dep会进行收集，收集的是watcher
+- 如果是数组，调用splice
+- 如果是对象，defineReative将这个属性设置成响应式
+
+13. vue为什么需要虚拟dom
+- 真实DOM的抽象
+- 直接操作DOM性能低但js层的操作效率高，可以将DOM操作转化为对象操作，最终通过diff算法比对差异进行更新DOM，减少了对真实DOM的操作。
+- 虚拟DOM不依赖真实平台环境，从而可以实现跨平台。 
+
+14. vue的diff
+- 平级比较，不考虑跨级比较的情况。内部采用深度递归的方式+双指针进行比较。
+- 先比较是否相同节点，key tag；
+- 相同节点比较属性，并复用老节点。
+- 比较儿子节点，考虑老节点和新节点的情况。
+- 优化比较，头头，尾尾，头尾，尾头；
+- vue3中采用最长递增子序列来实现diff优化
+
+
+15. 粒度过细，更新不精准。
+
+
+16. 
+17. 
+18. 
+
+19. Vue的DOM更新是同步还是异步？
+- 初次渲染是同步，更新是异步
+- 为什么是异步：每次读取数据的时候都要更新，会造成很多不必要的性能浪费
+- 原理：每次的更新操作都调用nextTick讲异步任务加入列队；
+  - 整体利用的是一个发布订阅；每一次的nextTick执行都是把对应的回调函数放到一个数组里面，然后同步代码执行完成之后，异步函数（能用微任务就用微任务、不能就用宏仁务）进行执行数组里面的回调函数
+
+20. vue的生命周期
+- 定义：创建Vue实例到实例销毁的过程。
+- 某一阶段想执行的代码，放入对应的钩子函数中。
+- 8个常用的钩子函数
+  - beforeCreate：高级组件封装的时候可能会用到，一般业务用不上；this相关属性拿不到（props、data、methods）
+  - created：第一个能获取到data、props、methods等的方法；一般在这里发起ajax请求；
+  - beforeMount
+  - mounted：真实DOM操作需要的操作，百度地图等具体API需要DOM的时候。ref
+  - beforeUpdate：做更新操作；
+  - updated：一定不能做更新操作。会出现死循环
+  - destoryed：定时器清除
+- 3个不常用的
+  - activated & deactivated：keep-alive组件缓存的时候会执行的生命周期；
+    - keep-alive:LRU缓存；
+
+# Node
+1. nodejs 事件循环机制
+
+- Node.js 采用事件驱动和异步 I/O，实现单线程、高并发的运行环境
+
+```
+   ┌───────────────────────┐
+┌─>│        timers         │
+│  └──────────┬────────────┘
+│  ┌──────────┴────────────┐
+│  │     I/O callbacks     │
+│  └──────────┬────────────┘
+│  ┌──────────┴────────────┐
+│  │     idle, prepare     │
+│  └──────────┬────────────┘      ┌───────────────┐
+│  ┌──────────┴────────────┐      │   incoming:   │
+│  │         poll          │<─────┤  connections, │
+│  └──────────┬────────────┘      │   data, etc.  │
+│  ┌──────────┴────────────┐      └───────────────┘
+│  │        check          │
+│  └──────────┬────────────┘
+│  ┌──────────┴────────────┐
+└──┤    close callbacks    │
+   └───────────────────────┘
+```
+
+- 每个阶段结束后都会判断是否存在微任务，有则执行。
+  - 微任务分为：`process.nextTick()`和 `promise.then()`,nextTick 比 then 早。
+- 初次进入事件循环，从 timer 开始，会判断是否存在 setTimeout 和 setInterval，存在则执行，完毕->微任务->I/O callbacks ->Idle/prepare ->poll 轮询
+- poll 轮询回调列队：
+  - 列队不为空：执行回调
+    - 触发了相应的微任务，等这个回调执行完毕就执行对于的微任务
+  - 列队为空：
+    - 有 setTimeout 和 setInterval 倒计时结束，会结束 poll，去 timer 执行 callback
+    - 有 setImmidate,结束 poll，去 check
+    - 否则阻塞，等待新的回调进来
+- check: 处理 setImmediate 的回调。
+- close callback:执行一些回调，线程 socket 等。
 
 
 # 算法
 
-- 快排：(分治法)
+1. 快排：(分治法)
 
 ```js
 function quickSort(arr) {
@@ -656,7 +948,7 @@ function quickSort(arr, i, j) {
 }
 ```
 
-- 插排：
+2. 插排：
 
 ```js
 function insertSort(arr) {
@@ -676,7 +968,7 @@ function insertSort(arr) {
 }
 ```
 
-- 防抖:一段时间内，多次执行某个方法，只执行最新的那个请求
+3. 防抖:一段时间内，多次执行某个方法，只执行最新的那个请求
 
 ```js
 function debounce(func, wait) {
@@ -692,7 +984,7 @@ function debounce(func, wait) {
 }
 ```
 
-- 节流：一段时间内，多此执行某个方法，在一段时间内只执行一次。多次发起请求，不会理会。
+4. 节流：一段时间内，多此执行某个方法，在一段时间内只执行一次。多次发起请求，不会理会。
 
 ```js
 function throttle(func, wait) {
@@ -710,7 +1002,21 @@ function throttle(func, wait) {
 }
 ```
 
--
+5. 前序中序求后序：
+```js
+let temp = [];
+function demo(pre, vin) {
+  if (pre.length == 0 || vin.length == 0) return;
+  var index = vin.indexOf(pre[0]);
+  var left = vin.slice(0, index);
+  var right = vin.slice(index + 1);
+  demo(pre.slice(1, index + 1), left);
+  demo(pre.slice(index + 1), right);
+  temp.push(pre[0]);
+}
+demo([1, 2, 3, 4, 5, 6, 7], [3, 2, 4, 1, 6, 5, 7])
+console.log(temp);
+```
 
 # 其他
 
