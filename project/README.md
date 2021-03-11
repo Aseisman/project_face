@@ -11,15 +11,15 @@
 2. http 协议：
 
 - http 协议分为 1.0 1.1 和 2.0
-
-- http2 和 http1 的区别：
+  - http2 源自 SPADY/2，设计目标是降低 50% 的页面加载时间
+- http2：
 
   - 多路复用：允许单一的 HTTP2 连接同时发起多重请求-响应消息。（可以设置优先级）
   - 二进制编码：HTTP2.0 讲所有的传输信息分割为更小的信息或帧，然后对他们进行二进制编码的首部压缩。
   - 首部压缩：HTTP1.1 的请求和响应都是由状态行、请求/响应头部、消息主体三部分组成，状态行和头部却没有经过任何压缩。而 2.0 支持对 header 进行压缩；
   - 服务器推送（server push）,同 SPDY 一样，http2.0 也具有 server push 功能。
 
-- http1.0 和 1.1 的区别：
+- 1.1 的区别：
 
   - 长连接：http1.1 默认开启长连接
   - 节约带宽：http1.1 支持只发送 header 信息，不带任何 body 信息，服务器觉得有权限：返回 100；无权限返回 401；有权限后再发 body 信息。
@@ -73,6 +73,11 @@ websocket：`ws`或者`wss`连接标志.websocket 不会受同源策略的约束
 nginx 的反向代理接口：`nginx.config`
 
 `jsonp`、`document.domain+iframe`、`window.name+iframe`、`postMessage`(主要是对于两个不同域名的一些数据的传递，`postMessage(数据,地址)`)
+
+9. 三次握手：
+
+- Seq 作用：保持信息对等；防止脏连接，不会浪费资源。
+- 目的：在代价最低的层面上保证最高的连接成功率（资源浪费）；
 
 # HTML&CSS
 
@@ -157,6 +162,29 @@ nginx 的反向代理接口：`nginx.config`
 - 获取一组 querySelectorAll
 - 获取 html：document.documentElement
 - 获取 body：document.body
+
+8. 监听事件的顺序：
+   onmousedown onfocus onmouseup onclick
+
+9. 重排（回流）与重绘：
+
+- 重排（reflow）：dom 发生变化
+  - 触发页面重布局的属性（回流）
+  - 盒子模型相关属性会触发重布局
+  - 定位属性及浮动会触发重布局
+  - 改变节点内部文字结构会触发重布局
+- 重绘(repaint)：css 发生改变
+
+- 优化：
+  - 用 translate 替代 top 改变
+  - 不要使用 table 布局，可能很小的一个小改动都会造成整个 table 的重新布局
+  - 用 opacity 替代 visibility
+
+10. 伪类与伪元素：
+
+- 区别：有没有创建一个文档树之外的元素。伪类的操作对象是文档树中已有的元素，而伪元素则创建了一个文档数外的元素。
+- 伪类：（单冒号）hover、active、focus、
+- 伪元素：（双冒号）before、after、selection、placeholder
 
 # JavaScript
 
@@ -567,7 +595,8 @@ return -1;
 ```
 
 16. 函数柯里化：多个参数化简为单个参数
-柯里化函数应用：bind
+    柯里化函数应用：bind
+
 ```js
 function curry(){
   //类数组转为数组
@@ -584,6 +613,9 @@ function curry(){
   return adder;
 }
 ```
+
+17. 创建日期没有兼容性问题的是：
+    `new Date(2017,6,25,12,12,12)`
 
 # React
 
@@ -743,48 +775,142 @@ e.preventDefault：阻止默认事件，不会阻止事件传递。
 
 20. 通信方式：
 
-
 # Vue
-1. MVVM:
-- 后端mvc模式：view、model、controller（控制层，做某件事的控制）
-- 为什么要有这模式：目的、职责划分、分层，借鉴后端思想。对于前端而言就是如何将数据同步到页面上；
-- 自动映射数据到视图上；(简化隐藏controller)
 
-2. Vue2以及Vue3响应式数据的理解
+1. MVVM:
+
+- 后端 mvc 模式：view、model、controller（控制层，做某件事的控制）
+- 为什么要有这模式：目的、职责划分、分层，借鉴后端思想。对于前端而言就是如何将数据同步到页面上；
+- 自动映射数据到视图上；(简化隐藏 controller)
+
+2. Vue2 以及 Vue3 响应式数据的理解
+
 - 响应式数据：
-  - vue2: `object.defineProperty`,对于一个对象，通过遍历、递归，将对象中的属性重写get、set方法。
-  - vue2: 数组是通过重写数组方法来实现
-  - vue2: 多层对象是通过递归来实现劫持
-  - vue3: 判断取值是不是对象，是则进行代理proxy,取到某个值的时候，再进行代理(懒代理)。兼容性不好
+  - vue2:
+    1. `object.defineProperty`：对于一个对象，通过遍历、递归，将对象中的属性重写 get、set 方法。
+    2. 发布订阅模式
+       2-1. 通过重写我们的 get、set 之后，对于第一次调用 get 方法的时候，将 watcher 放入我们的 dep 数组中(触发依赖收集)，
+       2-2. 调用 set 方法的时候，依次将我们的 dep 中的 watcher 执行
+       2-3. 每个属性都会有一个 dep
+    3. 数组是通过重写数组方法来实现
+    4. 多层对象是通过递归来实现劫持
+  - vue3:
+    1. 判断取值是不是对象，是则进行代理 proxy,取到某个值的时候，再进行代理(懒代理)；
+    2. 兼容性不好
 
 ```js
-构造函数调用init方法->initdata->observe->数组、对象分开,深度递归->defineRative->object.defineProperty
+// 构造函数调用init方法->initdata->observe->数组、对象分开,深度递归->defineRative->object.defineProperty
+function vue2() {
+  let state = {
+    count: 0,
+  };
+  let active;
+  function defineReactive(obj) {
+    for (let key in obj) {
+      let value = obj[key];
+      let dep = [];
+      Object.defineProperty(obj, key, {
+        get() {
+          if (active) {
+            dep.push(active);
+          }
+          return value;
+        },
+        set(newValue) {
+          value = newValue;
+          dep.forEach((watcher) => watcher());
+        },
+      });
+    }
+  }
+  defineReactive(state);
+  //模拟,watcher将一个个fn，即监听者放入dep数组中。
+  const watcher = (fn) => {
+    active = fn;
+    fn();
+    active = null;
+  };
+  watcher(() => {
+    app.innerHTML = state.count;
+  });
+  watcher(() => {
+    console.log(state.count);
+  });
+}
 ```
-- 双向绑定
 
-3. vue中如何检测数组变化
+3. vue 中如何检测数组变化
+
 - 重写数组方法（push、shift、pop、splice、unshift、sort、reverse）函数劫持
 - 数组中如果是对象数据类型，也会进行递归挟持
 - 数组的索引和长度变化是无法监控到的
-- vue3的proxy天生支持数据劫持。
+- vue3 的 proxy 天生支持数据劫持。
+
 ```js
-const oldArray=Object.create(Array.prototype);
-function test(){
-
+let state = [1, 2, 3];
+let originalArray = Array.prototype;
+let arrayMethods = Object.create(originalArray);
+function defineReactive(obj) {
+  //函数劫持
+  arrayMethods.push = function (...args) {
+    originalArray.push.call(this, ...args);
+    watcher();
+  };
+  obj.__proto__ == arrayMethods;
 }
+defineReactive();
+function watcher() {
+  arr.innerHTML = state;
+}
+watcher();
+setTimeout(() => {
+  state.push(4);
+}, 2000);
 ```
-4. Vue中如何进行依赖收集
-- 每个属性都拥有自己的dep属性、存档他所依赖的watcher、当属性变化后，会通知对应的watcher去更新
-- 默认在初始化时会调用render函数、此时会触发依赖收集
-- 当属性发生修改时，会触发watcher更新dep.notify()
-- 当一个组件在渲染时，会触发get方法、那么就会把这个组件放到这个属性的dep中。也就是dep中存放的所有依赖这个属性的组件。当改变这个属性，会触发set，这个时候循环调用dep中的所有项，来重新渲染这些依赖的组件。
 
-5. Vue中模板编译原理
-- template->ast树（parseHTML（对template进行循环，把摸板换成ast树，ast树是一个对象，有children等等，有点像虚拟DOM，但属性不一样）->对ast树进行标记、标记静态节点（diff优化）（递归标记，对象里面的static属性：trueorfalse）->生成代码（render函数（with语法，取值方便），对象）
+4. Vue 依赖收集
 
-6. Vue生命周期钩子是如何实现的
-- 回调函数，将所有的生命周期维护成一个数组，然后依次执行，将生命周期中的用一个beforeCreate，丢进去一个数组，然后数组遍历执行。
-- vue.options会放置了全局的所有属性（例如vue.mixin中的东西，data的东西）
+- 每个属性都拥有自己的 dep 属性、存档他所依赖的 watcher、当属性变化后，会通知对应的 watcher 去更新
+- 默认在初始化时会调用 render 函数、此时会触发依赖收集
+- 当属性发生修改时，会触发 watcher 更新 `dep.notify()`
+- 当一个组件在渲染时，会触发 get 方法、那么就会把这个组件放到这个属性的 dep 中。也就是 dep 中存放的所有依赖这个属性的组件。当改变这个属性，会触发 set，这个时候循环调用 dep 中的所有项，来重新渲染这些依赖的组件。
+
+5. Vue 中模板编译原理
+
+- template 转成 ast 树（template 循环，正则匹配，换成一个对象，children 等等属性）
+- ast 树生成 render 函数（标记，diff 优化，render 函数是 with 语法，取值方便）
+- vue-loader 中用到 vue-template-compiler
+
+<!-- - template->ast 树（parseHTML（对 template 进行循环，把摸板换成 ast 树，ast 树是一个对象，有 children 等等，有点像虚拟 DOM，但属性不一样）->对 ast 树进行标记、标记静态节点（diff 优化）（递归标记，对象里面的 static 属性：trueorfalse）->生成代码（render 函数（with 语法，取值方便），对象） -->
+
+6. Vue 生命周期
+
+- 是什么：Vue 实例从创建到销毁的过。开始创建、初始化数据、编译模板、挂载 Dom→ 渲染、更新 → 渲染、卸载等一系列过程，我们称这是 Vue 的生命周期；
+- 作用：多个事件钩子，让我们更好的在 Vue 实例的整个过程中进行控制。
+- 8 个常见的生命钩子
+  1. beforeCreate、created
+     - beforeCreate 很少用到，高级组件封装的时候会用上业务基本用不上，拿不到 props,data,function 等
+     - created: 第一个能拿到 props、data、function 等，发 ajax 请求。
+  2. beforeMounted,mounted
+     - beforeMounted 基本用不上，
+     - mounted：真实 DOM 已经存在了，echarts，百度地图等真实 DOM 操作。
+  3. beforeUpdate,updated
+     - beforeUpdate：更新操作
+     - updated：不能做更新操作，容易出现死循环。
+  4. beforeDestory,destoryed
+     - beforeDestory：清除定时器
+- 3 个不常见的生命周期
+  1. actived & deactived：配合 keep-alive 缓存组件的时候才存在
+  2. errorCaptured:捕获错误
+
+7. Vue 生命周期钩子是如何实现的
+
+- vue.options 里面会放置了全局的所有属性，生命周期钩子函数也在里面
+
+- 例如 beforeCreate,每个生命周期钩子属性都是一个数组，所有的对应生命周期的回调函数都维护成一个数组，然后依次执行。
+
+- vue.options 会放置了全局的所有属性（例如 vue.mixin 中的东西，data 的东西）
+
 ```js
 vue.mixin({
   beforeCreate("sss");
@@ -795,77 +921,90 @@ const vm=new Vue({
 })
 ```
 
-7. Vue的生命周期方法有哪些？一般在哪一步发送请求及原因
+8. keep-live 原理：
 
-8. Vue.mixin的使用场景和原理
-- 共享数据的方案：mixin：抽离公共的业务逻辑，组件初始化时调用mergeOptions方法进行合并（放到Vue.options），采用策略模式针对不同的属性进行合并。数据冲突，采用就近原则。
+- 缓存，LRU 算法，
+- 缓存的是虚拟 DOM
+
+9. Vue.mixin 的使用场景和原理
+
+- 共享数据的方案：mixin：抽离公共的业务逻辑，组件初始化时调用 mergeOptions 方法进行合并（放到 Vue.options），采用策略模式针对不同的属性进行合并。数据冲突，采用就近原则。
 - 命名冲突问题，依赖问题，数据来源问题。
 
-9. Vue组件data为什么必须是个函数
-- 为什么不能是对象：在Vue.extend的时候，创建构造函数，extend会合并对象，把父类的data和子类的data进行合并，放在Vue实例中（只有一个Vue实例，全局new了一个Vue）
-- 组件的渲染流程：Vue.component--内部调用-->Vue.extend（继承，传入options，生成组件构造函数，即子类）->子类->new 子类
-10. nextTick在哪里使用
-- 是在下次DOM更新循环结束之后执行的延迟回调
-- 是异步的，但是将内容维护到一个数组里面，最终按顺序执行（属性更新为a—>nextTick(获取值为a，而不是b)->属性更新为b）（数据是异步更新，所以nextTick为了拿到新数据，它也是异步更新）
-- 用于更新后的DOM
-- 第一次是异步，第二次往数组里面放，最后执行flushCallBack方法循环数组执行。
-11. computed和watcher的区别（功能不同，实现原理相同都是watcher（dep发布订阅模式））
-- computed和watch都是基于Watcher来实现的（computed是取值时才执行（写成一个函数，然后defineProperty对应的属性的时候，进行调用该函数（类似get函数）），watch是（数据一改，则直接执行对应的方法））
-- 访问代理函数，代理函数里面通过watcher.dirty判断是取缓存还是重新计算。
-- dirty在哪里设置的：在watcher设置的
-- computed是具备缓存的，依赖的值不发生变化，则不会重新计算
-- watch是监控值的变化，一变就会执行回调
+9. Vue 组件 data 为什么必须是个函数
 
-- 用户(就是我们写的watch)、组件（template中的）、计算属性三种watcher
+- 为什么不能是对象：在 Vue.extend 的时候，创建构造函数，extend 会合并对象，把父类的 data 和子类的 data 进行合并，放在 Vue 实例中（只有一个 Vue 实例，全局 new 了一个 Vue）
+- 组件的渲染流程：Vue.component--内部调用-->Vue.extend（继承，传入 options，生成组件构造函数，即子类）->子类->new 子类
 
-12. Vue.set是怎么实现的（vm.$set(vm.user,age,11) || vm.$set(vm.user,1,11)）（可以用set去更新数组索引）
-- 数组和对象都增加了dep属性，dep会进行收集，收集的是watcher
-- 如果是数组，调用splice
-- 如果是对象，defineReative将这个属性设置成响应式
+10. nextTick 在哪里使用
 
-13. vue为什么需要虚拟dom
-- 真实DOM的抽象
-- 直接操作DOM性能低但js层的操作效率高，可以将DOM操作转化为对象操作，最终通过diff算法比对差异进行更新DOM，减少了对真实DOM的操作。
-- 虚拟DOM不依赖真实平台环境，从而可以实现跨平台。 
+- 是在下次 DOM 更新循环结束之后执行的延迟回调
+- 是异步的，但是将内容维护到一个数组里面，最终按顺序执行（属性更新为 a—>nextTick(获取值为 a，而不是 b)->属性更新为 b）（数据是异步更新，所以 nextTick 为了拿到新数据，它也是异步更新）
+- 用于更新后的 DOM
+- 第一次是异步，第二次往数组里面放，最后执行 flushCallBack 方法循环数组执行。
 
-14. vue的diff
+11. computed 和 watcher 的区别（功能不同，实现原理相同都是 watcher（dep 发布订阅模式））
+
+- computed 和 watch 都是基于 Watcher 来实现的（computed 是取值时才执行（写成一个函数，然后 defineProperty 对应的属性的时候，进行调用该函数（类似 get 函数）），watch 是（数据一改，则直接执行对应的方法））
+- 访问代理函数，代理函数里面通过 watcher.dirty 判断是取缓存还是重新计算。
+- dirty 在哪里设置的：在 watcher 设置的
+- computed 是具备缓存的，依赖的值不发生变化，则不会重新计算
+- watch 是监控值的变化，一变就会执行回调
+
+- 用户(就是我们写的 watch)、组件（template 中的）、计算属性三种 watcher
+
+12. Vue.set 是怎么实现的（vm.$set(vm.user,age,11) || vm.$set(vm.user,1,11)）（可以用 set 去更新数组索引）
+
+- 数组和对象都增加了 dep 属性，dep 会进行收集，收集的是 watcher
+- 如果是数组，调用 splice
+- 如果是对象，defineReative 将这个属性设置成响应式
+
+13. vue 为什么需要虚拟 dom
+
+- 真实 DOM 的抽象
+- 直接操作 DOM 性能低但 js 层的操作效率高，可以将 DOM 操作转化为对象操作，最终通过 diff 算法比对差异进行更新 DOM，减少了对真实 DOM 的操作。
+- 虚拟 DOM 不依赖真实平台环境，从而可以实现跨平台。
+
+14. vue 的 diff
+
 - 平级比较，不考虑跨级比较的情况。内部采用深度递归的方式+双指针进行比较。
 - 先比较是否相同节点，key tag；
 - 相同节点比较属性，并复用老节点。
 - 比较儿子节点，考虑老节点和新节点的情况。
 - 优化比较，头头，尾尾，头尾，尾头；
-- vue3中采用最长递增子序列来实现diff优化
-
+- vue3 中采用最长递增子序列来实现 diff 优化
 
 15. 粒度过细，更新不精准。
 
+16.
+17.
+18.
 
-16. 
-17. 
-18. 
+19. Vue 的 DOM 更新是同步还是异步？
 
-19. Vue的DOM更新是同步还是异步？
 - 初次渲染是同步，更新是异步
 - 为什么是异步：每次读取数据的时候都要更新，会造成很多不必要的性能浪费
-- 原理：每次的更新操作都调用nextTick讲异步任务加入列队；
-  - 整体利用的是一个发布订阅；每一次的nextTick执行都是把对应的回调函数放到一个数组里面，然后同步代码执行完成之后，异步函数（能用微任务就用微任务、不能就用宏仁务）进行执行数组里面的回调函数
+- 原理：每次的更新操作都调用 nextTick 讲异步任务加入列队；
+  - 整体利用的是一个发布订阅；每一次的 nextTick 执行都是把对应的回调函数放到一个数组里面，然后同步代码执行完成之后，异步函数（能用微任务就用微任务、不能就用宏仁务）进行执行数组里面的回调函数
 
-20. vue的生命周期
-- 定义：创建Vue实例到实例销毁的过程。
+20. vue 的生命周期
+
+- 定义：创建 Vue 实例到实例销毁的过程。
 - 某一阶段想执行的代码，放入对应的钩子函数中。
-- 8个常用的钩子函数
-  - beforeCreate：高级组件封装的时候可能会用到，一般业务用不上；this相关属性拿不到（props、data、methods）
-  - created：第一个能获取到data、props、methods等的方法；一般在这里发起ajax请求；
+- 8 个常用的钩子函数
+  - beforeCreate：高级组件封装的时候可能会用到，一般业务用不上；this 相关属性拿不到（props、data、methods）
+  - created：第一个能获取到 data、props、methods 等的方法；一般在这里发起 ajax 请求；
   - beforeMount
-  - mounted：真实DOM操作需要的操作，百度地图等具体API需要DOM的时候。ref
+  - mounted：真实 DOM 操作需要的操作，百度地图等具体 API 需要 DOM 的时候。ref
   - beforeUpdate：做更新操作；
   - updated：一定不能做更新操作。会出现死循环
   - destoryed：定时器清除
-- 3个不常用的
-  - activated & deactivated：keep-alive组件缓存的时候会执行的生命周期；
-    - keep-alive:LRU缓存；
+- 3 个不常用的
+  - activated & deactivated：keep-alive 组件缓存的时候会执行的生命周期；
+    - keep-alive:LRU 缓存；
 
 # Node
+
 1. nodejs 事件循环机制
 
 - Node.js 采用事件驱动和异步 I/O，实现单线程、高并发的运行环境
@@ -904,6 +1043,13 @@ const vm=new Vue({
 - check: 处理 setImmediate 的回调。
 - close callback:执行一些回调，线程 socket 等。
 
+# Webpack
+
+1. webpack 是干什么的，它都做了哪些工作
+2. 为什么要有 webpack，没有就不行吗
+3. 与其他工具的对比，grunt, gulp
+4. loader,plugin 写过吗，怎么写
+5. webpack 的原理
 
 # 算法
 
@@ -1002,7 +1148,8 @@ function throttle(func, wait) {
 }
 ```
 
-5. 前序中序求后序：
+5. （二叉树）前序中序求后序：
+
 ```js
 let temp = [];
 function demo(pre, vin) {
@@ -1014,9 +1161,12 @@ function demo(pre, vin) {
   demo(pre.slice(index + 1), right);
   temp.push(pre[0]);
 }
-demo([1, 2, 3, 4, 5, 6, 7], [3, 2, 4, 1, 6, 5, 7])
+demo([1, 2, 3, 4, 5, 6, 7], [3, 2, 4, 1, 6, 5, 7]);
 console.log(temp);
 ```
+
+6. 不稳定的排序：快速排序、希尔排序、堆排序
+7. 稳定的排序：冒泡排序、插入排序、归并排序
 
 # 其他
 
@@ -1036,6 +1186,14 @@ console.log(temp);
 
 - 多个子元素的同一事件可以绑定在父元素上，提高效率，减少代码量。
 - 父元素通过`e.target`或者`e.srcElement`（IE）识别子元素。然后再判断子元素是不是相应的标签`nodeName`
+
+4. git 操作：
+
+- git revert：撤销已经 push 的 commit，返回到已经 commit 但未 push 的时候
+- git reset --soft：撤销 commit，到已 add 未 commmit 的时候
+- git reset --hard：撤销 commit 和 add，代码也回到上一次 commit 的时候
+- git commit --amend: 重新修改 commit 信息
+- git rebase：变基
 
 # 项目
 
@@ -1062,10 +1220,47 @@ console.log(temp);
 解决的问题：
 
 - 人多、团队多、普通应用变成巨型应用，不可维护问题；
-
-方式：
-
+  方式：
 - 乾坤
+
+3. Sentry 应用监控原理以及应用
+
+- 开源的实时错误追踪系统。实时监控并修复异常问题。
+- Sentry 的目的是为了让我们专注于系统与程序的异常信息，目的是提高排查问题的效率，日志事件的量到达一个限制时甚至丢弃一些内容。
+- 原理：
+  - Sentry 是一个 C/S 架构
+  - 我们的应用只是把错误信息上报给 sentry 的 web 端。web 处理后放入消息队列或 Redis 内存队列，worker 从队列中消费数据进行处理。
+  - 数据的逻辑和列队的压力都在服务器端，对客户端压力不大。
+  - web->redis 列队->worker->存储 and 告警
+  - 日志处理时聚合策略：优先级从高到低：Stacktrace->Exception->Template->Messages
+
+4. 封装定时任务 node-schedule
+
+- 原理：
+  - 利用 cron 表达式，通过 settimeout 和 events 事件进行管理、对所有加入的事件进行排序，并且计算当前时间和最近的一个事件发生的时间间隔。然后用 setTimeOut 设置回调。一种是一次性的、一种是周期性的，一次性任务调用完就结束，周期性的会不断调用。
+- events 事件监听器：观察者模式
+
+  - 事件相当于一个主题，所有注册到这个事件上的处理函数相当于观察者（Observer）
+  - eventEmitters->events<-进入事件循环->event loop->event handlers
+  - Node.js 有多个内置的事件，我们可以通过引入 events 模块，并通过实例化 EventEmitter 类来绑定和监听事件
+  - 大多数时候我们不会直接使用 EventEmitter，而是在对象中继承它。包括 fs、net、 http 在内的，只要是支持事件响应的核心模块都是 EventEmitter 的子类。
+
+- 为什么要继承 EventEmitter 的子类？
+
+  - 首先，具有某个实体功能的对象实现事件符合语义， 事件的监听和发射应该是一个对象的方法。
+  - 其次 JavaScript 的对象机制是基于原型的，支持 部分多重继承，继承 EventEmitter 不会打乱对象原有的继承关系。
+
+- 每个任务需要单独 new 一个 schedule.RecurrenceRule 对象（用来处理 Cron 表达式的），不能公用。
+
+5. 装饰器 routing-controller
+
+- 装饰器就是一个方法，可以注入到类、方法、属性参数上来扩展类、属性、方法、参数的功能。
+- ts 天然支持 decorator,在 tsconfig.js 里增加配置：`experimentalDecorators:true`
+- AOP 面向切面编程: 使用装饰器对于工程最大的两个好处（面向切面编程：解耦：抽离出来公共逻辑）
+  - 不需要抽象出一个基类，写一些基础函数
+  - 函数内部结构完全没有被改变，逻辑依旧干净整洁
+- metaData 与 Reflect：
+  - metaData 存储一个对象的描述信息。（我们用来做用户的信息存储）
 
 # 性能优化
 
@@ -1080,3 +1275,428 @@ console.log(temp);
   - 图片懒加载（react-loadLazy）
 - 减少请求大小
   - 图片使用 webp 格式：大小缩小 30%-50%，懒加载过程中，判断是否支持 webp，后期可以优化为：服务器依据请求头是否支持 webp，支持则自动返回 webp 格式的图片。
+
+# 美团算法
+
+1. 奇数位丢弃：
+   对于一个由 0..n 的所有数按升序组成的序列，我们要进行一些筛选，每次我们取当前所有数字中从小到大的第奇数位个的数，并将其丢弃。重复这一过程直到最后剩下一个数。请求出最后剩下的数字。
+
+```js
+// 规律 第一次后第一个为1，第二次后第二个为3 第三次 7、15 31 63 127……
+let n;
+while ((n = readline())) {
+  let p = 0;
+  n = parseInt(n) + 1;
+  while (n > 1) {
+    n = (n / 2) | 0;
+    p++;
+  }
+  print(Math.pow(2, p) - 1);
+}
+```
+
+2. 吃鱼：
+
+- 她抓到了 n 条鱼，她有一个煎锅，每次可以同时煎 m 条鱼。这个煎锅可以花一分钟的时间煎熟鱼的一面，当一条鱼的两面都煎熟了它就可以吃了。现在她想知道最少需要花多少时间能够把所有的鱼都煎熟。
+- n 条鱼 m 个锅，一次一分钟挣一面，需要多少分钟；
+
+```js
+//所有面：2*n 除锅m,有余数就向上进一；
+var arr = readline().split(" ");
+var n = parseInt(arr[0]);
+var m = parseInt(arr[1]);
+if (n < m) console.log(2);
+else console.log(Math.ceil((2 * n) / m));
+```
+
+3. 交错序列：
+   我们定义一个由数字 0 和 1 组成的序列是交错序列，当且仅当在这个序列中 0 和 1 是轮流 出现的，比如，0，010，10101 都是交错序列。
+   现在给出了一个由数字 0 和 1 组成的序列 𝐴，它可能不是一个交错序列，但是你可以从这个 序列中选择一些数字出来，按他们在序列 𝐴 中原有的相对顺序排列(即选取 𝐴 的一个子序列)， 使得你最后得到的是一个交错序列。问这样能得到的交错序列的最长长度是多少。
+
+```js
+let n = parseInt(readline());
+let arr = readline().split(" ");
+let flag = arr[0];
+let ans = 1;
+for (let j = 1; j < arr.length; j++) {
+  if (arr[j] != flag) {
+    ans++;
+    flag = arr[j];
+  }
+}
+print(ans);
+```
+
+# 字节算法
+
+1. 寻找两个正序数组的中位数：
+
+```js
+var findMedianSortedArrays = function (nums1, nums2) {
+  // //o(m+n);
+  // let num=[...nums1,...nums2].sort((a,b)=>a-b);
+  // if(num.length%2==0){
+  //     //偶数位
+  //     let index=num.length/2;
+  //     return (num[index]+num[index-1])/2;
+  // }else{
+  //     //奇数位
+  //     let index=num.length/2|0;
+  //     return num[index];
+  // }
+
+  //二分法
+  // 保证num1是比较短的数组
+  if (nums1.length > nums2.length) {
+    [nums1, nums2] = [nums2, nums1];
+  }
+  const length1 = nums1.length;
+  const length2 = nums2.length;
+  let min = 0;
+  let max = length1;
+  let half = Math.floor((length1 + length2 + 1) / 2);
+  while (max >= min) {
+    const i = Math.floor((max + min) / 2);
+    const j = half - i;
+    console.log(nums1[i - 1], nums2[j]);
+    console.log(nums1[i], nums2[j - 1]);
+    if (i > min && nums1[i - 1] > nums2[j]) {
+      max = i - 1;
+    } else if (i < max && nums1[i] < nums2[j - 1]) {
+      min = i + 1;
+    } else {
+      let left, right;
+      if (i === 0) left = nums2[j - 1];
+      else if (j === 0) left = nums1[i - 1];
+      else left = Math.max(nums1[i - 1], nums2[j - 1]);
+
+      if (i === length1) right = nums2[j];
+      else if (j === length2) right = nums1[i];
+      else right = Math.min(nums1[i], nums2[j]);
+      console.log("===");
+      console.log(left, right);
+      return (length1 + length2) % 2 ? left : (left + right) / 2;
+    }
+  }
+};
+```
+
+2. 接雨水：
+   <!-- https://leetcode-cn.com/problems/trapping-rain-water/ -->
+   给定 n 个非负整数表示每个宽度为 1 的柱子的高度图，计算按此排列的柱子，下雨之后能接多少雨水。
+
+```js
+var trap = function (height) {
+  let left = 0,
+    right = height.length - 1;
+  let res = 0;
+  let leftMax = 0,
+    rightMax = 0;
+  while (left < right) {
+    if (height[left] < height[right]) {
+      leftMax = Math.max(height[left], leftMax);
+      res += leftMax - height[left];
+      left++;
+    } else {
+      rightMax = Math.max(height[right], rightMax);
+      res += rightMax - height[right];
+      right--;
+    }
+  }
+  return res;
+};
+```
+
+# 其他家算法
+
+1.  > 小易总是感觉饥饿，所以作为章鱼的小易经常出去寻找贝壳吃。最开始小易在一个初始位置 x*0。对于小易所处的当前位置 x，他只能通过神秘的力量移动到 4 * x + 3 或者 8 \_ x + 7。因为使用神秘力量要耗费太多体力，所以它只能使用神秘力量最多 100,000 次。贝壳总生长在能被 1,000,000,007 整除的位置(比如：位置 0，位置 1,000,000,007，位置 2,000,000,014 等)。小易需要你帮忙计算最少需要使用多少次神秘力量就能吃到贝壳。
+
+- 解析：f(x)=2x+1,4x+3=f(2x+1) 8x+7=f(f(2x+1));因此只需要统计做多少次 2*x+1 操作就会到 1000000007 倍数的位置，将此次数记为 count；而对 4*x+3 操作 3 次相当于对 8*x+7 操作 2 次：
+  如：g(x) = 4*x+3 ; m(x)=8*x+7 ; 则 g(g(g(x))) = m(m(x)) = 64*x+63 ;
+  因此对 4*x+3 的操作次数只能为 0,1,2 ; 3 次时就可以用对 8*x+7 操作 2 次来代替。
+  对（count+2）/3 就实现了上述。
+
+```java
+  import java.util.Scanner;
+  public class Main {
+  public static void main(String[] args) {
+  Scanner sc = new Scanner(System.in);
+  int x = sc.nextInt();
+  //分析得 4*x+3 相当于 2*x+1 操作 2 次
+  //8*x+7 相当于 2*x+1 操作 3 次
+  //统计做了多少次 2*x+1
+  int count = 0;
+  while(x!=0 && count<=300000){
+  x = ((x<<1)+1)%1000000007;
+  count++;
+  }
+  count = (count+2)/3;//4*x+3 的操作只能进行 0,1,2 次
+  System.out.println(count >100000 ? -1 : count);
+  }
+}
+```
+
+2. 三数之和：
+   > 数组 nums，判断 nums 中是否存在三个元素 a，b，c ，使得 a + b + c = 0 ？找出所有和为 0 且**不重复**的三元组。
+   > 输入：nums = [-1,0,1,2,-1,-4]
+   > 输出：[[-1,-1,2],[-1,0,1]]
+
+```js
+var threeSum = function (nums) {
+  if (nums == null || nums.length < 3) return [];
+  let res = [];
+  nums.sort((a, b) => a - b);
+  //双指针
+  for (let i = 0; i < nums.length; i++) {
+    if (nums[i] > 0) break;
+    if (i > 0 && nums[i] == nums[i - 1]) continue; //去重
+    let left = i + 1,
+      right = nums.length - 1;
+    while (left < right) {
+      const sum = nums[i] + nums[left] + nums[right];
+      if (sum == 0) {
+        res.push([nums[i], nums[left], nums[right]]);
+        while (left < right && nums[left] == nums[left + 1]) left++;
+        while (left < right && nums[right] == nums[right - 1]) right--;
+        left++;
+        right--;
+      } else if (sum < 0) left++;
+      else if (sum > 0) right--;
+    }
+  }
+  return res;
+};
+```
+
+3. 交换 a、b 的值，不用临时变量
+
+```js
+a = a + b;
+b = a - b;
+a = a - b;
+```
+
+4. 手写 reduce 的源码
+
+```js
+//reduce的原理是累加
+Array.prototype.reduce = function (callback, prev) {
+  for (let i = 0; i < this.length; i++) {
+    if (typeof prev === "undefined") {
+      prev = callback(this[i], this[i + 1], i + 1, this);
+    } else {
+      prev = callback(prev, this[i], i, this);
+    }
+  }
+  return prev;
+};
+```
+
+5. Set 实现两数组的交集、并集、补集
+
+```js
+//交集
+let arr1 = [1, 2, 3, 4, 5, 4, 3, 2, 1];
+let arr2 = [4, 5, 6, 5, 6];
+let result = [...new Set(arr1)].filter((item) => new Set(arr2).has(item));
+//[4,5]
+
+//并集
+let result = [...new Set([...arr1, ...arr2])];
+//[1,2,3,4,5,6]
+
+// 差集，arr1有，arr2没有的
+let result = [...new Set(arr1).filter((item) => !new Set(arr2).has(item))];
+//[1,2,3]
+
+//arr1有 arr2没有 且arr1没有 arr2有的
+let result = [...new Set([...arr1, ...arr2])].filter(
+  (item) => !new Set(arr1).has(item) || !new Set(arr2).has(item)
+);
+console.log(result);
+//[1,2,3,6]
+```
+
+6. 手写 new
+
+```js
+// 1. 创建一个空对象
+// 2. 设置空对象的__proto__属性继承构造函数的prototype属性，也就是继承构造函数的原型对象上的公有属性和方法
+// 3. 调用构造函数，将构造函数中的this替换为空对象的this，继承构造函数中的属性
+// 4. 在函数内部返回一个新对象
+function myNew(fun) {
+  let obj = {};
+  obj.__proto__ = fun.prototype;
+  let result = func.apply(obj, ...arguments);
+  return result instanceof Object ? result : obj;
+}
+```
+
+7. 找字符串重复次数最多的字符
+   > "abcbdbdbaadb"
+
+```js
+function find(str) {
+  let map = {};
+  for (let i = 0; i < str.length; i++) {
+    if (map[str[i]]) {
+      map[str[i]]++;
+    } else {
+      map[str[i]] = 1;
+    }
+  }
+  let max = 0,
+    k = "";
+  for (let i in map) {
+    if (map[i] > max) {
+      max = map[i];
+      k = i;
+    }
+  }
+  return k;
+}
+```
+
+8. 找零钱
+   > 输入：coins = [1, 2, 5], amount = 11
+   > 输出：3
+   > 解释：11 = 5 + 5 + 1
+
+```js
+function find(coins, amount) {
+  //动态规划
+  //dp代表什么，dp[i]表示凑到i元的最少硬币数
+  let dp = new Array(amount + 1).fill(Infinity);
+  dp[0] = 0;
+  for (let i = 1; i <= amount; i++) {
+    for (let coin of coins) {
+      if (i - coin >= 0) {
+        dp[i] = Math.min(dp[i], dp[i - coin] + 1);
+      }
+    }
+  }
+  return dp[amount] == Infinity ? -1 : dp[amount];
+}
+```
+
+9. 找零钱 2
+   > 输入: amount = 5, coins = [1, 2, 5]
+   > 输出: 4
+   > 解释: 有四种方式可以凑成总金额:
+   > 5=5
+   > 5=2+2+1
+   > 5=2+1+1+1
+   > 5=1+1+1+1+1
+
+```js
+var change = function (amount, coins) {
+  //完全背包问题
+
+  //一维动态规划
+  var dp = new Array(amount + 1);
+  dp.fill(0);
+  dp[0] = 1;
+  for (let i = 0; i < coins.length; i++) {
+    for (let j = coins[i]; j <= amount; j++) {
+      dp[j] += dp[j - coins[i]];
+    }
+  }
+  return dp[amount];
+};
+```
+
+10. 手写 reverse
+
+```js
+Array.prototype.reverse = function () {
+  let arr = this;
+  var left = 0,
+    right = arr.length - 1;
+  while (left < right) {
+    [arr[left], arr[right]] = [arr[right], arr[left]];
+    left++;
+    right--;
+  }
+};
+var arr = [1, 2, 3, 4, 5];
+arr.reverse();
+console.log(arr);
+```
+
+11. 一个偶数分解成两个素数，求这两个素数相差最大时，这两个素数的值
+
+```js
+function isPrinme(n) {
+  if (n == 0 || n == 1) {
+    return false;
+  }
+  if (n == 2) {
+    return true;
+  }
+  for (var i = 2; i < Math.sqrt(n); i++) {
+    if (n % i == 0) {
+      return false;
+    }
+  }
+  return true;
+}
+function find(num) {
+  for (let i = 2; i <= ((num / 2) | 0); i++) {
+      if(isPrinme(i)&&isPrinme(num-i)){
+          console.log(i,num-i);
+          return;
+      }
+  }
+}
+find(210);
+```
+
+12. （二叉树）前序中序求后序：
+
+```js
+let temp = [];
+function demo(pre, vin) {
+  if (pre.length == 0 || vin.length == 0) return;
+  var index = vin.indexOf(pre[0]);
+  var left = vin.slice(0, index);
+  var right = vin.slice(index + 1);
+  demo(pre.slice(1, index + 1), left);
+  demo(pre.slice(index + 1), right);
+  temp.push(pre[0]);
+}
+demo([1, 2, 3, 4, 5, 6, 7], [3, 2, 4, 1, 6, 5, 7]);
+console.log(temp);
+```
+13. 剪绳子
+> 长度为n，剪成m段，使得各段相乘，乘积最大
+数学题，凑到3
+```js
+function demo(n){
+  if(n<3)return n-1;
+  var times=n/3|0;
+  var e=n%3;
+  if(e==0)return Math.pow(3,times);
+  else if(e==1)return Math.pow(3,times-1)*4;
+  return Math.pow(3,times)*2;
+}
+```
+14. 最长不包含重复字符的字符串的长度
+>设temp进行保存，遍历用indexOf进行判断temp中是否有该字符，有就slice之前的部分，同时与res比较大小
+```js
+function demo(s) {
+  let res = 0,
+    temp = "";
+  const len = s.length;
+  for (let i = 0; i < len; i++) {
+    if (temp.indexOf(s[i]) == -1) {
+      temp += s[i];
+      res = Math.max(res, temp.length);
+    } else {
+      temp = temp.slice(temp.indexOf(s[i]) + 1);
+      temp += s[i];
+    }
+  }
+  return res;
+}
+```
+15. 
