@@ -2,67 +2,110 @@
 
 1. Grpc:
 
--   RPC: 框架提供了一套机制（类似 http 协议）使得应用程序间可以进行通信，遵从 server/client 模型，底层是 Http2.0 协议，而 restful api 不一定是 http2.0
-    -   1： 通过 proto 通信，定义接口等，有更加严格的接口约束条件；安全性（接口约束）
-    -   2： 二进制编码，减少传输的数据量 高性能
-    -   3： 支持流式通信（streaming 模式），而 restful api 似乎很少这么用，视频流等都会用专门的协议 HLS，RTMP 等。
-        （http2.0 的知识点）
+- RPC: 框架提供了一套机制（类似 http 协议）使得应用程序间可以进行通信，遵从 server/client 模型，底层是 Http2.0 协议，而 restful api 不一定是 http2.0
+  - 1： 通过 proto 通信，定义接口等，有更加严格的接口约束条件；安全性（接口约束）
+  - 2： 二进制编码，减少传输的数据量 高性能
+  - 3： 支持流式通信（streaming 模式），而 restful api 似乎很少这么用，视频流等都会用专门的协议 HLS，RTMP 等。
+    （http2.0 的知识点）
 
-2. http 协议：
+2.  从输入 URL 到页面展示，这中间发生了什么？
+
+- 1. URL 解析
+
+  - 协议、域名、端口
+    - HTTP 是明文传输协议，连接简单，是无状态的。
+    - HTTPS 协议是由 SSL+HTTP 协议构建的可进行加密传输、身份认证的网络协议，比 HTTP 协议安全。
+    - 端口号：HTTP 80，HTTPS 443。FTP 21
+  - 编码
+    - encodeURI 编码/ decodeURI 解码
+
+- 2. 缓存检查
+
+  - 打开网页：查找硬盘缓存中是否有匹配，如有则使用，如没有则发送网络请求。
+  - 普通刷新 (F5)：因 TAB 没关闭，因此内存缓存是可用的，会被优先使用，其次才是硬盘缓存。
+  - 强制刷新 (Ctrl + F5)：浏览器不使用缓存，因此发送的请求头部均带有 Cache-control: no-cache，服务器直接返回 200 和最新内容。
+  - 强缓存与协商缓存
+
+- 3. DNS 解析：将域名解析成 IP 地址；
+
+  - 1. 递归查询：主机向本地域名服务器的查询采用递归查询
+    - 客户端->浏览器缓存->本地 hosts 文件->本地 DNS 解析缓存->本地 DNS 服务器
+  - 2. 迭代查询：本地域名服务器向根域名服务器的查询
+    - 客户端->本地 DNS 服务器<====>根域名服务器
+      本地 DNS 服务器<====>顶级域名服务器
+      本地 DNS 服务器<====>权威域名服务器
+
+- 4. TCP 连接：TCP 三次握手；
+- 5. 发送 HTTP 请求；
+- 6. 服务器处理请求并返回 HTTP 的报文；
+- 7. 浏览器解析渲染页面；
+  - 根据 html 文件构建 DOM 树和 CSSOM 树。构建 DOM 树期间，如果遇到 JS，阻塞 DOM 树及 CSSOM 树的构建，优先加载 JS 文件，加载完毕，再继续构建 DOM 树及 CSSOM 树。
+  - 构建渲染树（Render Tree）
+  - 页面的重绘（repaint）与重排（reflow，也有称回流）。页面渲染完成后，若 JS 操作了 DOM 节点，根据 JS 对 DOM 操作动作的大小，浏览器对页面进行重绘或是重排。
+- 8. 断开连接：TCP 四次挥手
+
+3. http 协议：
 
 - http 协议分为 1.0 1.1 和 2.0
   - http2 源自 SPADY/2，设计目标是降低 50% 的页面加载时间
 - http2：
 
-    -   多路复用：允许单一的 HTTP2 连接同时发起多重请求-响应消息。（可以设置优先级）
-    -   二进制编码：HTTP2.0 讲所有的传输信息分割为更小的信息或帧，然后对他们进行二进制编码的首部压缩。
-    -   首部压缩：HTTP1.1 的请求和响应都是由状态行、请求/响应头部、消息主体三部分组成，状态行和头部却没有经过任何压缩。而 2.0 支持对 header 进行压缩；
-    -   服务器推送（server push）,同 SPDY 一样，http2.0 也具有 server push 功能。
+  - 多路复用：允许单一的 HTTP2 连接同时发起多重请求-响应消息。（可以设置优先级）
+  - 二进制编码：HTTP2.0 讲所有的传输信息分割为更小的信息或帧，然后对他们进行二进制编码的首部压缩。
+  - 首部压缩：HTTP1.1 的请求和响应都是由状态行、请求/响应头部、消息主体三部分组成，状态行和头部却没有经过任何压缩。而 2.0 支持对 header 进行压缩；
+  - 服务器推送（server push）,同 SPDY 一样，http2.0 也具有 server push 功能。
 
 - 1.1 的区别：
 
-    -   长连接：http1.1 默认开启长连接
-    -   节约带宽：http1.1 支持只发送 header 信息，不带任何 body 信息，服务器觉得有权限：返回 100；无权限返回 401；有权限后再发 body 信息。
-    -   host 域：http1.0 认为每台服务器只有一个唯一的 ip，因此请求信息中没有传递 hostname，即不存在我们的 host 域；但是我们现在一台服务器可以有多个虚拟主机，共享一个 ip 地址，所以 1.1 在请求消息中添加了 host 域，没给会报 400
-    -   缓存处理：1.0 有 if-modify-since（last-modify）、expire；1.1 添加了 E-tag 中的 if-match 和 if-not-match，cache-control 等。
-    -   1.1 新增了 24 个错误状态响应码。
+  - 长连接：http1.1 默认开启长连接
+  - 节约带宽：http1.1 支持只发送 header 信息，不带任何 body 信息，服务器觉得有权限：返回 100；无权限返回 401；有权限后再发 body 信息。
+  - host 域：http1.0 认为每台服务器只有一个唯一的 ip，因此请求信息中没有传递 hostname，即不存在我们的 host 域；但是我们现在一台服务器可以有多个虚拟主机，共享一个 ip 地址，所以 1.1 在请求消息中添加了 host 域，没给会报 400
+  - 缓存处理：1.0 有 if-modify-since（last-modify）、expire；1.1 添加了 E-tag 中的 if-match 和 if-not-match，cache-control 等。
+  - 1.1 新增了 24 个错误状态响应码。
 
--   http 缓存
-    -   强缓存：判断是否有 Cache-controller、Expire（no-cache\no-store）、过没过期；
-    -   协商缓存：与服务器端对比资源是否进行更新，没更新返回 304，有更新 200，（E-tag，Last-Modified）
-    -   Cache-controll(http1.1):no-cache、no-store、max-age（xx 秒）、public/private、must-revalidate
-    -   Expires(http1.0):时间点
-    -   E-Tag(http1.1):If-Not-Match（hash 算法）
-    -   Last-Modified(http1.0):If-Modified-Since:时间点
+- http 缓存
+  - 强缓存：判断是否有 `Cache-controller`（no-cache\no-store）、`Expire`、过没过期；
+  - 协商缓存：与服务器端对比资源是否进行更新，没更新返回 304，有更新 200，（`E-tag`，`Last-Modified`）
+  - Cache-controll(http1.1):no-cache、no-store、max-age（xx 秒）、public/private、must-revalidate
+  - Expires(http1.0):时间点
+  - E-Tag(http1.1):If-Not-Match（hash 算法）
+  - Last-Modified(http1.0):If-Modified-Since:时间点
 
-3. DNS 解析：
+4. DNS 解析：
 
-4. options 请求：
+- 1. 递归查询：主机向本地域名服务器的查询采用递归查询
+  - 客户端->浏览器缓存->本地 hosts 文件->本地 DNS 解析缓存->本地 DNS 服务器
+- 2. 迭代查询：本地域名服务器向根域名服务器的查询
+  - 客户端->本地 DNS 服务器<====>根域名服务器
+    本地 DNS 服务器<====>顶级域名服务器
+    本地 DNS 服务器<====>权威域名服务器
 
--   options 方法发起请求，响应报文里面包含一个 allow 首部字段，该字段的值表明了服务器支持的方法；
--   options 的预检请求：在 cors 中，可使用 options 发起预检请求，返回`Access-Control-Request-Method`即服务器可用的 HTTP 方法。
+5. options 请求：
 
-5. 怎样不发 options 请求
+- options 方法发起请求，响应报文里面包含一个 allow 首部字段，该字段的值表明了服务器支持的方法；
+- options 的预检请求：在 cors 中，可使用 options 发起预检请求，返回`Access-Control-Request-Method`即服务器可用的 HTTP 方法。
 
--   跨域资源共享 CORS 分为简单请求和非简单请求，发送简单请求不会发起 options 请求
--   简单请求的要素：
-    -   只能是 GET POST HEAD
-    -   请求头：Accept、Accept-Language、Content-type、等等（不能自定义用户信息）
-    -   Content-type 只能取 application/x-www-form-urlencoded、multipart/form-data、text/plain
-    -   XMLHTTPRequestUpload 对象没有注册事件监听器，没有 ReadableStream 对象
--   不满足以上任何一点则为非简单请求
-    -   PUT、DELETE，不满足
-    -   header 带用户信息 token，不满足
-    -   Content-type 有些是 application/json，不满足
--   只能减少发起 options 的次数：
-    -   后端请求头返回 `Access-Control-Max-Age:number`，表示 options 返回的信息可以缓存多少秒
-    -   不同浏览器有不同的上限，火狐 24 小时，谷歌 10 分钟
+6. 怎样不发 options 请求
 
-6. 同源策略：协议+域名+端口都要相同，不同的域名指向同一个 ip 地址，也是非同源的。
+- 跨域资源共享 CORS 分为简单请求和非简单请求，发送简单请求不会发起 options 请求
+- 简单请求的要素：
+  - 只能是 GET POST HEAD
+  - 请求头：Accept、Accept-Language、Content-type、等等（不能自定义用户信息）
+  - Content-type 只能取 application/x-www-form-urlencoded、multipart/form-data、text/plain
+  - XMLHTTPRequestUpload 对象没有注册事件监听器，没有 ReadableStream 对象
+- 不满足以上任何一点则为非简单请求
+  - PUT、DELETE，不满足
+  - header 带用户信息 token，不满足
+  - Content-type 有些是 application/json，不满足
+- 只能减少发起 options 的次数：
+  - 后端请求头返回 `Access-Control-Max-Age:number`，表示 options 返回的信息可以缓存多少秒
+  - 不同浏览器有不同的上限，火狐 24 小时，谷歌 10 分钟
 
-7. 跨域资源共享（CORS）：服务端设置 Access-Control-Allow-Origin 即可，前端无须设置，若要带 cookie 请求：前后端都需要设置（withCredentials: true）
+7. 同源策略：协议+域名+端口都要相同，不同的域名指向同一个 ip 地址，也是非同源的。
 
-8. 跨域：
+8. 跨域资源共享（CORS）：服务端设置 Access-Control-Allow-Origin 即可，前端无须设置，若要带 cookie 请求：前后端都需要设置（withCredentials: true）
+
+9. 跨域：
 
 跨域资源共享（CORS）：服务端设置 Access-Control-Allow-Origin 即可，前端无须设置，若要带 cookie 请求：前后端都需要设置（withCredentials: true）
 
@@ -74,73 +117,105 @@ nginx 的反向代理接口：`nginx.config`
 
 `jsonp`、`document.domain+iframe`、`window.name+iframe`、`postMessage`(主要是对于两个不同域名的一些数据的传递，`postMessage(数据,地址)`)
 
-9. 三次握手：
+10. 三次握手：
 
 - Seq 作用：保持信息对等；防止脏连接，不会浪费资源。
 - 目的：在代价最低的层面上保证最高的连接成功率（资源浪费）；
+- 为什么有第三次握手：第二次握手的时候如果出现网络延迟等情况，可能会发送多次请求给服务端，这个时候服务端如果没有第三次握手，直接就把多次请求都建立连接，就会造成资源浪费。
+- ACK:回应的标志
+- SYN:发起连接的标志
+
+11. 四次挥手：
+
+- 第一次：客户端通知服务端说：客户端不再发送数据了
+- 第二次：服务端收到信息，回答客户端：好的我知道了
+- 第三次：服务端通知客户端说：我也不发送数据了
+- 第四次：客户端收到信息，回答服务端：好的我知道了
+
+- 为什么是 4 次：  
+  第二次服务器端回复客户端的时候，可能服务器端还有数据没有发送完，正在发送的过程中，这个时候如果将第三次合并进来的话，就会发生传送中断。
+
+- 为什么第四次挥手后客户端要等待 2msl 的时间才能关闭  
+  为了确保第四次挥手的 ACK 能够到达服务端，
+  如果 1ms 后服务器端没收到消息，就会重发第三次挥手，这个时候一来一回就需要 2msl，
+  如果这个时候客户端没有等待，那么服务器就无法进入正常的关闭连接状态。
+
+12. 重排（回流）与重绘：
+
+- 重排（reflow）：dom 发生变化
+  - 触发页面重布局的属性（回流）
+  - 盒子模型相关属性会触发重布局
+  - 定位属性及浮动会触发重布局
+  - 改变节点内部文字结构会触发重布局
+- 重绘(repaint)：css 发生改变
+
+- 优化：
+  - 用 translate 替代 top 改变
+  - 不要使用 table 布局，可能很小的一个小改动都会造成整个 table 的重新布局
+  - 用 opacity 替代 visibility
 
 # HTML&CSS
 
 1. 清除浮动：父元素因为子级元素浮动引起的内部高度为 0 的问题
 
--   额外标签：最后加个 div，设置为 clear:both;
--   父级添加 overflow:hidden(触发 BFC)
--   after 伪元素清除浮动：`clear:both;content:"",height:0;`
-    -   IE 不支持伪元素：加 css：`*zoom:1;`
--   before 和 after 添加双伪元素清除浮动：
+- 额外标签：最后加个 div，设置为 clear:both;
+- 父级添加 overflow:hidden(触发 BFC)
+- after 伪元素清除浮动：`clear:both;content:"",height:0;`
+  - IE 不支持伪元素：加 css：`*zoom:1;`
+- before 和 after 添加双伪元素清除浮动：
 
 ```css
 .clearfix:after,
 .clearfix:before {
-    content: '';
-    display: table;
+  content: "";
+  display: table;
 }
 .clearfix:after {
-    clear: both;
+  clear: both;
 }
 .clearfix {
-    *zoom: 1;
+  *zoom: 1;
 }
 ```
 
 2. BFC:块级格式化上下文
 
--   BFC 是一种属性：是一种不受外界影响的独立容器；
--   就比如说对于我们的盒模型来说，两个都设置了 margin 的父子元素，子元素想相对于父元素进行定位时，没有对父元素进行相对定位：而是造成了 margin 塌陷：
--   这个时候我们就可以对于子元素设置 BFC 属性，让他不受我们的父元素的干扰：
+- BFC 是一种属性：是一种不受外界影响的独立容器；
+- 就比如说对于我们的盒模型来说，两个都设置了 margin 的父子元素，子元素想相对于父元素进行定位时，没有对父元素进行相对定位：而是造成了 margin 塌陷：
+- 这个时候我们就可以对于子元素设置 BFC 属性，让他不受我们的父元素的干扰：
 
--   触发 BFC 属性的 4 种方法：
-    -   position:absolute;
-    -   display:inline-block;
-    -   float:left/right;
-    -   overflow:hidden;
+- 触发 BFC 属性的 4 种方法：
+  - position:absolute;
+  - display:inline-block;
+  - float:left/right;
+  - overflow:hidden;
 
 3. CSS 布局:
 
--   圣杯布局（三栏布局）：
--   双飞翼布局（三栏布局）：
--   flex 布局：
--   两栏布局：
--   响应式布局：rem、@media 媒体查询
+- 圣杯布局（三栏布局）：
+- 双飞翼布局（三栏布局）：
+- flex 布局：
+- 两栏布局：
+- 响应式布局：rem、@media 媒体查询
 
 4. `animation、transition、transform、translate`
 
--   transform（变形）:可以旋转、缩放、移动、扭曲
--   translate（移动）:是 transform 的一个属性值
--   transition（过渡动画）：transform 是 transition 的一个属性值
--   animation、transition 是 css3 中的两种动画属性:
-    -   animation 强调流程与控制，对元素的一个或多个属性的变化进行控制（animation 与@keyframes 结合使用）
-    -   transition 强调过渡，是元素的一个或多个属性发生变化时产生的过渡效果。
+- transform（变形）:可以旋转、缩放、移动、扭曲
+- translate（移动）:是 transform 的一个属性值
+- transition（过渡动画）：transform 是 transition 的一个属性值
+- animation、transition 是 css3 中的两种动画属性:
+  - animation 强调流程与控制，对元素的一个或多个属性的变化进行控制（animation 与@keyframes 结合使用）
+  - transition 强调过渡，是元素的一个或多个属性发生变化时产生的过渡效果。
 
 5. animation 参数及算法
 
--   animation-timing-function:使用名伟三次贝塞尔函数的数学函数来生成速度曲线
-    -   linear：匀速
-    -   ease：默认，低->加快->慢
-    -   ease-in：低速开始
-    -   ease-out:低速结束
-    -   ease-in-out：低速开始和结束
-    -   cubic-beaier(n,n,n,n)贝塞尔函数
+- animation-timing-function:使用名伟三次贝塞尔函数的数学函数来生成速度曲线
+  - linear：匀速
+  - ease：默认，低->加快->慢
+  - ease-in：低速开始
+  - ease-out:低速结束
+  - ease-in-out：低速开始和结束
+  - cubic-beaier(n,n,n,n)贝塞尔函数
 
 6. 选择器
 
@@ -166,21 +241,7 @@ nginx 的反向代理接口：`nginx.config`
 8. 监听事件的顺序：
    onmousedown onfocus onmouseup onclick
 
-9. 重排（回流）与重绘：
-
-- 重排（reflow）：dom 发生变化
-  - 触发页面重布局的属性（回流）
-  - 盒子模型相关属性会触发重布局
-  - 定位属性及浮动会触发重布局
-  - 改变节点内部文字结构会触发重布局
-- 重绘(repaint)：css 发生改变
-
-- 优化：
-  - 用 translate 替代 top 改变
-  - 不要使用 table 布局，可能很小的一个小改动都会造成整个 table 的重新布局
-  - 用 opacity 替代 visibility
-
-10. 伪类与伪元素：
+9. 伪类与伪元素：
 
 - 区别：有没有创建一个文档树之外的元素。伪类的操作对象是文档树中已有的元素，而伪元素则创建了一个文档数外的元素。
 - 伪类：（单冒号）hover、active、focus、
@@ -190,17 +251,17 @@ nginx 的反向代理接口：`nginx.config`
 
 1. 数组 API
 
--   Splice 返回什么？
-    -   改变原数组，以数组的形式返回被修改的内容。
--   push、unshift 返回新长度
--   pop、shift 返回弹出的值
--   sort、reverse 返回新数组
--   7 个会改变原数组的 API：splice、push、pop、shift、unshift、sort、reverse。
+- Splice 返回什么？
+  - 改变原数组，以数组的形式返回被修改的内容。
+- push、unshift 返回新长度
+- pop、shift 返回弹出的值
+- sort、reverse 返回新数组
+- 7 个会改变原数组的 API：splice、push、pop、shift、unshift、sort、reverse。
 
 2. 事件循环机制
 
--   宏仁务：` ` `script、setTimeout、setInterval、I/O、setImmediate(node环境)` ` `
--   微任务：` ` ``promise`、mutationObserver、process.nextTick()` ` `
+- 宏仁务：` ` `script、setTimeout、setInterval、I/O、setImmediate(node环境)` ` `
+- 微任务：` ` ``promise`、mutationObserver、process.nextTick()` ` `
 
 1、主线程：一开始从上往下；遇到其他宏仁务，放置到宏仁务列队中，遇到微任务，放置到微任务列队中
 
@@ -208,13 +269,13 @@ nginx 的反向代理接口：`nginx.config`
 
 3、微任务做完后，再看看有没有宏仁务，有的话就继续做宏仁务。
 
--   DOM 事件是一个过程
-    -   行为触发：（异步）什么时候用户点击、返回响应，这都是未知的也就是异步的。（宏仁务）（addListener 是宏仁务）
-    -   事件处理：（同步）系统接收到事件触发，找到对应 dom 的回调函数、并执行的过程是同步的。(用户点击执行 click 是同步)
+- DOM 事件是一个过程
+  - 行为触发：（异步）什么时候用户点击、返回响应，这都是未知的也就是异步的。（宏仁务）（addListener 是宏仁务）
+  - 事件处理：（同步）系统接收到事件触发，找到对应 dom 的回调函数、并执行的过程是同步的。(用户点击执行 click 是同步)
 
 3. nodejs 事件循环机制
 
--   Node.js 采用事件驱动和异步 I/O，实现单线程、高并发的运行环境
+- Node.js 采用事件驱动和异步 I/O，实现单线程、高并发的运行环境
 
 ```
    ┌───────────────────────┐
@@ -237,274 +298,274 @@ nginx 的反向代理接口：`nginx.config`
    └───────────────────────┘
 ```
 
--   每个阶段结束后都会判断是否存在微任务，有则执行。
-    -   微任务分为：process.nextTick()和 ` promise``.then `(),nextTick 比 then 早。
--   初次进入事件循环，从 timer 开始，会判断是否存在 setTimeout 和 setInterval，存在则执行，完毕->微任务->I/O callbacks ->Idle/prepare ->poll 轮询
--   poll 轮询回调列队：
-    -   列队不为空：执行回调
-        -   触发了相应的微任务，等这个回调执行完毕就执行对于的微任务
-    -   列队为空：
-        -   有 setTimeout 和 setInterval 倒计时结束，会结束 poll，去 timer 执行 callback
-        -   有 setImmidate,结束 poll，去 check
-        -   否则阻塞，等待新的回调进来
--   check: 处理 setImmediate 的回调。
--   close callback:执行一些回调，线程 socket 等。
+- 每个阶段结束后都会判断是否存在微任务，有则执行。
+  - 微任务分为：process.nextTick()和 ` promise``.then `(),nextTick 比 then 早。
+- 初次进入事件循环，从 timer 开始，会判断是否存在 setTimeout 和 setInterval，存在则执行，完毕->微任务->I/O callbacks ->Idle/prepare ->poll 轮询
+- poll 轮询回调列队：
+  - 列队不为空：执行回调
+    - 触发了相应的微任务，等这个回调执行完毕就执行对于的微任务
+  - 列队为空：
+    - 有 setTimeout 和 setInterval 倒计时结束，会结束 poll，去 timer 执行 callback
+    - 有 setImmidate,结束 poll，去 check
+    - 否则阻塞，等待新的回调进来
+- check: 处理 setImmediate 的回调。
+- close callback:执行一些回调，线程 socket 等。
 
 4. 类型判断方法
 
--   typeof:
+- typeof:
 
-    -   返回字符串形式："number"、'string'、'function'
-    -   只能判断普通类型和函数，数组等 object 类型均返回'object'
+  - 返回字符串形式："number"、'string'、'function'
+  - 只能判断普通类型和函数，数组等 object 类型均返回'object'
 
--   instanceof: 用于检测构造函数的 prototype 属性是否出现在某个实例对象的原型链上。
+- instanceof: 用于检测构造函数的 prototype 属性是否出现在某个实例对象的原型链上。
 
-    -   对于 number 和 string 等普通类型的定义来说，除了用 new 去创建的，其他类似`var a=123`用`a instance of Number`去判断结果都是 false
-    -   `{}`除外,对于 Object 类型来说，`var a={b:123}`可以用 instanceof 去判断。
-    -   String、Date、Number 等的都是基于 Object 衍生的，原型链可以解释。所以对于 Number 等类型来说，instanceof Object 均为 true -`!mycar instanceof Car`和`!(mycar instanceof Car)`不一样，`!mycar`对隐式转换成 boolean 值。
-    -   详情参考 MDN：https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Operators/instanceof
+  - 对于 number 和 string 等普通类型的定义来说，除了用 new 去创建的，其他类似`var a=123`用`a instance of Number`去判断结果都是 false
+  - `{}`除外,对于 Object 类型来说，`var a={b:123}`可以用 instanceof 去判断。
+  - String、Date、Number 等的都是基于 Object 衍生的，原型链可以解释。所以对于 Number 等类型来说，instanceof Object 均为 true -`!mycar instanceof Car`和`!(mycar instanceof Car)`不一样，`!mycar`对隐式转换成 boolean 值。
+  - 详情参考 MDN：https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Operators/instanceof
 
--   isNaN():判断是不是 NaN 类型
+- isNaN():判断是不是 NaN 类型
 
-    -   会对传入的值进行隐式转换成 Number 类型，如果能够转换成功，则不是 NaN 类型，如果转换失败，则返回 true
+  - 会对传入的值进行隐式转换成 Number 类型，如果能够转换成功，则不是 NaN 类型，如果转换失败，则返回 true
 
--   Object.is()
-    -   传入两个值，判断两个值类型是否相等
+- Object.is()
+  - 传入两个值，判断两个值类型是否相等
 
 5. 深拷贝&&浅拷贝
 
--   深拷贝：
+- 深拷贝：
 
-    -   JSON.stringify()\JSON.parse()
-    -   遍历对象的 key，把对应的 value 赋给新的对象的 key 上。由于有的 value 还是个对象，所以需要递归克隆；
-    -   循环引用的问题：es6 的 WeakMap 可以解决，或自己开一个数组保存遍历过的值，判断是否存在。
-    -   WeakMap 是以对象为键的键值对，所以我们把对象存进去判断是否有该对象，如果有的话我们就不用再进行循环了。
+  - JSON.stringify()\JSON.parse()
+  - 遍历对象的 key，把对应的 value 赋给新的对象的 key 上。由于有的 value 还是个对象，所以需要递归克隆；
+  - 循环引用的问题：es6 的 WeakMap 可以解决，或自己开一个数组保存遍历过的值，判断是否存在。
+  - WeakMap 是以对象为键的键值对，所以我们把对象存进去判断是否有该对象，如果有的话我们就不用再进行循环了。
 
-    ```js
-    //判断是什么类型
-    function isObject(obj) {
-        return (
-            Object.prototype.toString.call(obj) === '[object Object]' ||
-            Object.prototype.toString.call(obj) === '[object Array]'
-        ); //判断是不是对象，typeof不可行，typeof无法解决正则、Date类型
-    }
-    function deepcopy(source, hash = new WeakMap()) {
-        if (!isObject(source)) return source;
-        if (hash.has(source)) return hash.get(source); //已经深拷贝过一次了，直接返回
-        // 判断参数是对象还是数组来初始化返回值
-        let res = Array.isArray(source) ? [] : {};
-        hash.set(source, res); // 哈希表添加新对象
-        //循环
-        for (let key in source) {
-            //属于本身
-            if (Object.prototype.hasOwnProperty.call(source, key)) {
-                if (isObject(source[key])) {
-                    res[key] = deepcopy(source[key], hash);
-                } else {
-                    res[key] = source[key];
-                }
-            }
+  ```js
+  //判断是什么类型
+  function isObject(obj) {
+    return (
+      Object.prototype.toString.call(obj) === "[object Object]" ||
+      Object.prototype.toString.call(obj) === "[object Array]"
+    ); //判断是不是对象，typeof不可行，typeof无法解决正则、Date类型
+  }
+  function deepcopy(source, hash = new WeakMap()) {
+    if (!isObject(source)) return source;
+    if (hash.has(source)) return hash.get(source); //已经深拷贝过一次了，直接返回
+    // 判断参数是对象还是数组来初始化返回值
+    let res = Array.isArray(source) ? [] : {};
+    hash.set(source, res); // 哈希表添加新对象
+    //循环
+    for (let key in source) {
+      //属于本身
+      if (Object.prototype.hasOwnProperty.call(source, key)) {
+        if (isObject(source[key])) {
+          res[key] = deepcopy(source[key], hash);
+        } else {
+          res[key] = source[key];
         }
-        return res;
+      }
     }
-    ```
+    return res;
+  }
+  ```
 
--   浅拷贝：只拷贝对象的第一层
-    -   `Object.assign({},obj)`返回新的对象
-    -   展开运算符`a={...b}`
+- 浅拷贝：只拷贝对象的第一层
+  - `Object.assign({},obj)`返回新的对象
+  - 展开运算符`a={...b}`
 
 6. 遍历对象的方法
 
--   foreach
--   for...in、for...of
--   Array.prototype.map()
--   Array.prototype.reduce((v1,v2,index,arr)=>{})v1 是累加值、v2 是当前值、index 为当前索引、arr 为原数组
--   Array.prototype.filter(()=>{})返回新数组
--   Array.prototype.every(()=>{})参数为函数，每一项都返回 true，则 true。false 则退出遍历。
--   Array.prototype.some(()=>{})参数为函数，只要有一项返回 true，则退出遍历，返回 true。否则一直循环，最后返回 false。
--   Array.prototype.keys() values() entries()遍历键、值、键值对
+- foreach
+- for...in、for...of
+- Array.prototype.map()
+- Array.prototype.reduce((v1,v2,index,arr)=>{})v1 是累加值、v2 是当前值、index 为当前索引、arr 为原数组
+- Array.prototype.filter(()=>{})返回新数组
+- Array.prototype.every(()=>{})参数为函数，每一项都返回 true，则 true。false 则退出遍历。
+- Array.prototype.some(()=>{})参数为函数，只要有一项返回 true，则退出遍历，返回 true。否则一直循环，最后返回 false。
+- Array.prototype.keys() values() entries()遍历键、值、键值对
 
 7. 迭代器 Iterator
 
--   提供统一的接口，为不同的数据结构提供统一的访问机制。(Map,Set,Array)
--   迭代器对象包含一个 next()方法，调用 next()返回(done:boolean , value:any)(与生成器一致，后面可以用生成器模拟)
--   标志：Symbol.iterator
+- 提供统一的接口，为不同的数据结构提供统一的访问机制。(Map,Set,Array)
+- 迭代器对象包含一个 next()方法，调用 next()返回(done:boolean , value:any)(与生成器一致，后面可以用生成器模拟)
+- 标志：Symbol.iterator
 
 8. 生成器 Generator
 
--   function 有个\*号
--   yield 表达式:函数内使用，走到哪停到哪
--   生成器函数执行后，会返回一个迭代器对象{done,value}
--   生成器可以看作是迭代器的语法糖
+- function 有个\*号
+- yield 表达式:函数内使用，走到哪停到哪
+- 生成器函数执行后，会返回一个迭代器对象{done,value}
+- 生成器可以看作是迭代器的语法糖
 
 9. 普通对象迭代方法：
 
--   用生成器构造 Symbol.iterator 即可
+- 用生成器构造 Symbol.iterator 即可
 
 ```js
 let obj = {
-    0: 10,
-    1: 20,
-    2: 30,
-    3: 40,
-    length: 4,
-    //第一种方法，调用其他已有迭代器的标志
-    // [Symbol.iterator]: Array.prototype[Symbol.iterator]
-    //第二种方法：手写一个
-    [Symbol.iterator]: function () {
-        let self = this,
-            index = 0;
+  0: 10,
+  1: 20,
+  2: 30,
+  3: 40,
+  length: 4,
+  //第一种方法，调用其他已有迭代器的标志
+  // [Symbol.iterator]: Array.prototype[Symbol.iterator]
+  //第二种方法：手写一个
+  [Symbol.iterator]: function () {
+    let self = this,
+      index = 0;
+    return {
+      next() {
+        if (index > self.length - 1) {
+          return {
+            value: undefined,
+            done: true,
+          };
+        }
         return {
-            next() {
-                if (index > self.length - 1) {
-                    return {
-                        value: undefined,
-                        done: true,
-                    };
-                }
-                return {
-                    value: self[index++],
-                    done: false,
-                };
-            },
+          value: self[index++],
+          done: false,
         };
-    },
+      },
+    };
+  },
 };
 for (let item of obj) {
-    console.log(item);
+  console.log(item);
 }
 ```
 
 10. Promise
 
--   是什么： 异步编程的一种解决方案
--   定义：
+- 是什么： 异步编程的一种解决方案
+- 定义：
 
-    -   `promise` 构造函数是同步执行的，`promise.then` 是异步执行的。
-    -   `promise` 有 3 种状态，pending、fulfilled、rejected。只能从 pengding->fulfilled 或者 pending->rejected
-    -   构造函数种 resolve 和 reject 只有第一次执行有效，多次调用没有任何作用。
-    -   `promise` 可以链式调用，每次 `promise` 调用`.then` 或者.catch 都会返回一个新的 `promise` 对象
-    -   `.then` || .catch 返回的值不能是 `promise` 本身，否则会造成死循环
-    -   `.then` 可以接收两个回调函数：成功函数、失败函数。`.catch` 是`.then` 的第二个参数的简便写法，
-        -   不同: `.then` 的错误函数捕获不了第一个成功函数抛出的错误，而`.catch` 可以。
+  - `promise` 构造函数是同步执行的，`promise.then` 是异步执行的。
+  - `promise` 有 3 种状态，pending、fulfilled、rejected。只能从 pengding->fulfilled 或者 pending->rejected
+  - 构造函数种 resolve 和 reject 只有第一次执行有效，多次调用没有任何作用。
+  - `promise` 可以链式调用，每次 `promise` 调用`.then` 或者.catch 都会返回一个新的 `promise` 对象
+  - `.then` || .catch 返回的值不能是 `promise` 本身，否则会造成死循环
+  - `.then` 可以接收两个回调函数：成功函数、失败函数。`.catch` 是`.then` 的第二个参数的简便写法，
+    - 不同: `.then` 的错误函数捕获不了第一个成功函数抛出的错误，而`.catch` 可以。
 
--   `Promise.all`: 接受 promise 对象数组，全成功->`.then` 或者 只要出现一个失败，则失败`.catch`。注意：如果在单个请求中定义了 catch 方法，则不会进入 promise.all 的 catch 中。
+- `Promise.all`: 接受 promise 对象数组，全成功->`.then` 或者 只要出现一个失败，则失败`.catch`。注意：如果在单个请求中定义了 catch 方法，则不会进入 promise.all 的 catch 中。
 
-    -   原理：
+  - 原理：
 
-    ```js
-    Peomise.all = function (values) {
-        return new Promise((resolve, reject) => {
-            let results = []; // 结果数组
-            let i = 0;
-            let processData = (value, index) => {
-                results[index] = value;
-                // 当成功的个数 和 当前的参数个数相等就把结果抛出去
-                if (++i === values.length) {
-                    resolve(results);
-                }
-            };
-            for (let i = 0; i < values.length; i++) {
-                let current = values[i]; // 拿到数组中每一项
-                // 判断是不是一个promise
-                if (
-                    (typeof current === 'object' && current !== null) ||
-                    typeof current == 'function'
-                ) {
-                    // 如果是promise
-                    if (typeof current.then == 'function') {
-                        // 就调用这个promise的then方法，把结果和索引对应上,如果任何一个失败了返回的proimise就是一个失败的promise
-                        current.then(y => {
-                            processData(y, i);
-                        }, reject);
-                    } else {
-                        processData(current, i);
-                    }
-                } else {
-                    processData(current, i);
-                }
+  ```js
+  Peomise.all = function (values) {
+    return new Promise((resolve, reject) => {
+      let results = []; // 结果数组
+      let i = 0;
+      let processData = (value, index) => {
+        results[index] = value;
+        // 当成功的个数 和 当前的参数个数相等就把结果抛出去
+        if (++i === values.length) {
+          resolve(results);
+        }
+      };
+      for (let i = 0; i < values.length; i++) {
+        let current = values[i]; // 拿到数组中每一项
+        // 判断是不是一个promise
+        if (
+          (typeof current === "object" && current !== null) ||
+          typeof current == "function"
+        ) {
+          // 如果是promise
+          if (typeof current.then == "function") {
+            // 就调用这个promise的then方法，把结果和索引对应上,如果任何一个失败了返回的proimise就是一个失败的promise
+            current.then((y) => {
+              processData(y, i);
+            }, reject);
+          } else {
+            processData(current, i);
+          }
+        } else {
+          processData(current, i);
+        }
+      }
+    });
+  };
+  ```
+
+- `Promise.race`: 接受 promise 对象数组，谁跑的快，则执行谁的回调函数。
+- 例题：
+
+  - `promise.race`使用情况：发送一个请求，限制时间为 2 秒
+
+  ```js
+  function request() {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve("来自服务器的message");
+      }, Math.random() * 5000);
+    });
+  }
+  function resolve() {
+    //code here
+    let second = new Promise((resolve, reject) => {
+      setTimeout(() => {
+        reject("超时");
+      }, 2000);
+    });
+    let arr = [request(), second];
+    return Promise.race();
+  }
+  resolve()
+    .then((res) => console.log(res))
+    .catch((err) => console.log(err));
+  ```
+
+  - 实现一个批量请求函数 multiRequest(urls,maxNum):
+    - 最大并发数 maxNum
+    - 每当有一个请求返回，就留下一个空位，可以增加新的请求
+    - 所有请求完成后，结果按照 urls 里面的顺序依次打出
+
+  ```js
+  function multiRequest(urls = [], maxNum) {
+    const len = urls.length;
+    const result = new Array(len).fill(false);
+    let count = 0;
+    return new Promise((resolve, reject) => {
+      //count来限制并发个数
+      while (count < maxNum) {
+        next();
+      }
+      function next() {
+        let current = count++;
+        if (current >= len) {
+          !result.includes(false) && resolve(result);
+          return;
+        }
+        const url = urls[current];
+        console.log(`开始请求`);
+        fetch(url)
+          .then((res) => {
+            result[current] = res;
+            console.log("完成");
+            if (current < len) {
+              next();
             }
-        });
-    };
-    ```
-
--   `Promise.race`: 接受 promise 对象数组，谁跑的快，则执行谁的回调函数。
--   例题：
-
-    -   `promise.race`使用情况：发送一个请求，限制时间为 2 秒
-
-    ```js
-    function request() {
-        return new Promise(resolve => {
-            setTimeout(() => {
-                resolve('来自服务器的message');
-            }, Math.random() * 5000);
-        });
-    }
-    function resolve() {
-        //code here
-        let second = new Promise((resolve, reject) => {
-            setTimeout(() => {
-                reject('超时');
-            }, 2000);
-        });
-        let arr = [request(), second];
-        return Promise.race();
-    }
-    resolve()
-        .then(res => console.log(res))
-        .catch(err => console.log(err));
-    ```
-
-    -   实现一个批量请求函数 multiRequest(urls,maxNum):
-        -   最大并发数 maxNum
-        -   每当有一个请求返回，就留下一个空位，可以增加新的请求
-        -   所有请求完成后，结果按照 urls 里面的顺序依次打出
-
-    ```js
-    function multiRequest(urls = [], maxNum) {
-        const len = urls.length;
-        const result = new Array(len).fill(false);
-        let count = 0;
-        return new Promise((resolve, reject) => {
-            //count来限制并发个数
-            while (count < maxNum) {
-                next();
+          })
+          .catch((err) => {
+            console.log("结束");
+            result[current] = err;
+            if (current < len) {
+              next();
             }
-            function next() {
-                let current = count++;
-                if (current >= len) {
-                    !result.includes(false) && resolve(result);
-                    return;
-                }
-                const url = urls[current];
-                console.log(`开始请求`);
-                fetch(url)
-                    .then(res => {
-                        result[current] = res;
-                        console.log('完成');
-                        if (current < len) {
-                            next();
-                        }
-                    })
-                    .catch(err => {
-                        console.log('结束');
-                        result[current] = err;
-                        if (current < len) {
-                            next();
-                        }
-                    });
-            }
-        });
-    }
-    ```
+          });
+      }
+    });
+  }
+  ```
 
 11. 判断数组的方法：
 
--   obj instanceof Array;
--   toString(obj)返回`[object Array]`
--   Array.isArray(obj);
--   Array.prototype.isPrototypeOf([1,2,3]):判断 Array 是不是在 obj 的原型链上。如果是则返回 true。
+- obj instanceof Array;
+- toString(obj)返回`[object Array]`
+- Array.isArray(obj);
+- Array.prototype.isPrototypeOf([1,2,3]):判断 Array 是不是在 obj 的原型链上。如果是则返回 true。
 
 12. 解决 setTimeout、setInterval 时间不准的问题:加个时间相减
 
@@ -617,29 +678,39 @@ function curry(){
 17. 创建日期没有兼容性问题的是：
     `new Date(2017,6,25,12,12,12)`
 
+18. window 子对象：
+
+- document：html 的信息
+- history：浏览器访问过的 url
+- location:url 上的一系列信息
+- nagivator：浏览器的信息
+- screen:客户端屏幕信息
+
+19. 扩展 js 的 String 等对象：prototype 扩展
+
 # React
 
 1. 什么是虚拟 DOM：
 
--   真实 DOM 的内存表示，一种编程概念，一种模式。
+- 真实 DOM 的内存表示，一种编程概念，一种模式。
 
 2. 类组件和函数组件之间有什么区别？
 
--   共同点：都是纯函数，无法修改 props
+- 共同点：都是纯函数，无法修改 props
 
--   区别：
-    -   函数组件性能比类组件高；
-    -   类组件使用时需要实例化，而函数组件可以直接执行，返回结果即可。
-    -   this、生命周期、state 等等的区别。
+- 区别：
+  - 函数组件性能比类组件高；
+  - 类组件使用时需要实例化，而函数组件可以直接执行，返回结果即可。
+  - this、生命周期、state 等等的区别。
 
 3. refs 作用是什么？
 
--   refs 提供访问 DOM 元素或者某个组件实例的入口
+- refs 提供访问 DOM 元素或者某个组件实例的入口
 
 4. react 的事件处理机制（SyntheticEvent）
 
 ```markdown
--   事件处理机制
+- 事件处理机制
 
 三阶段:捕获、目标、冒泡
 
@@ -655,37 +726,37 @@ e.preventDefault：阻止默认事件，不会阻止事件传递。
 事件代理：事件委托：
 多个子元素的同一事件可以绑定在父元素上。提高效率，减少代码量。
 
--   父元素通过`e.target`或者`e.srcElement`（IE）识别子元素。然后再判断子元素是不是相应的标签`nodeName`
+- 父元素通过`e.target`或者`e.srcElement`（IE）识别子元素。然后再判断子元素是不是相应的标签`nodeName`
 ```
 
--   React 中，默认事件传播方式为冒泡：
--   onClickCapture 来绑定捕获事件，
--   React 事件委托，由于有冒泡机制，用 e.stopPropation 阻止冒泡
--   SyntheticEvent 中事件的 event 对象，不是原生的 event 对象
+- React 中，默认事件传播方式为冒泡：
+- onClickCapture 来绑定捕获事件，
+- React 事件委托，由于有冒泡机制，用 e.stopPropation 阻止冒泡
+- SyntheticEvent 中事件的 event 对象，不是原生的 event 对象
 
 5. state 和 props 有什么区别？
 
 6. setState 是异步还是同步？
 
--   合成事件中是异步（多个 setState 合在一起，提高性能）
--   钩子函数中是异步（setState 中提供一个回调函数）
--   原生事件中是同步（addEventListener 事件）
--   setTimeout 中是同步
+- 合成事件中是异步（多个 setState 合在一起，提高性能）
+- 钩子函数中是异步（setState 中提供一个回调函数）
+- 原生事件中是同步（addEventListener 事件）
+- setTimeout 中是同步
 
 7. react@16.4+生命周期
 
--   三阶段：挂载阶段、组件更新阶段、卸载阶段
--   16 前：
-    -   挂载阶段：constructor、conponentWillMount、componentDidMount、conponentWillUnMount；
-    -   更新阶段：
-        -   `componentWillReceiverProps(nextProps)`：父组件传过来的 props 更新，进行 props 对比，更新 props 中的 state。
-        -   `shouldComonentUpdate(props,state)`:性能优化，对比 props、state 是否改变，改变了则可以重新渲染。
-        -   `componentWillUpdate(nextprops,nextstate)`;
-        -   `componentDidUpdate(preprops,prestate)`;
-    -   render:渲染：
--   16 后：
-    -   `getDerivedStateFromProps(nextProps,nextState)`:代替`componentWillReceiveProps`
-    -   `getSnapshotBeforeUpdate(preProps,preState)`:代替`componentWillUpdate`可以读取到 DOM 元素，在 render 之前被调用，保证 dom 与 componentDidUpdate 一致。
+- 三阶段：挂载阶段、组件更新阶段、卸载阶段
+- 16 前：
+  - 挂载阶段：constructor、conponentWillMount、componentDidMount、conponentWillUnMount；
+  - 更新阶段：
+    - `componentWillReceiverProps(nextProps)`：父组件传过来的 props 更新，进行 props 对比，更新 props 中的 state。
+    - `shouldComonentUpdate(props,state)`:性能优化，对比 props、state 是否改变，改变了则可以重新渲染。
+    - `componentWillUpdate(nextprops,nextstate)`;
+    - `componentDidUpdate(preprops,prestate)`;
+  - render:渲染：
+- 16 后：
+  - `getDerivedStateFromProps(nextProps,nextState)`:代替`componentWillReceiveProps`
+  - `getSnapshotBeforeUpdate(preProps,preState)`:代替`componentWillUpdate`可以读取到 DOM 元素，在 render 之前被调用，保证 dom 与 componentDidUpdate 一致。
 
 | class 组件                | Hooks 组件                |
 | ------------------------- | ------------------------- |
@@ -695,57 +766,57 @@ e.preventDefault：阻止默认事件，不会阻止事件传递。
 
 8. useEffect(fn,[])和 componentDidMount 有什么差异？
 
--   useEffect 会捕获初始的 props 和 state、想获取最新的值，可以使用 refs
+- useEffect 会捕获初始的 props 和 state、想获取最新的值，可以使用 refs
 
 9. hooks 为什么不能放在条件判断里？
 
--   以 setState 为例，在 react 内部，每个组件中的 hooks 都是以链表的形式存在 memoizeState 属性中的，如果用条件判断，导致 setState 不生效，则没有执行 setState 中的方法，导致链表后面的 next 没有执行，setState 的取值出现偏移，导致异常。
+- 以 setState 为例，在 react 内部，每个组件中的 hooks 都是以链表的形式存在 memoizeState 属性中的，如果用条件判断，导致 setState 不生效，则没有执行 setState 中的方法，导致链表后面的 next 没有执行，setState 的取值出现偏移，导致异常。
 
 10. fiber 是什么？
 
--   React Fiber 是一种基于浏览器的单线程调度算法
--   React Fiber 用类似 requestIdleCallback 的机制来做异步 diff。但是之前数据结构不支持这样的实现异步 diff，于是 React 实现了一个类似链表的数据结构，将原来的 递归 diff 变成了现在的 遍历 diff，这样就能做到异步可更新了。
+- React Fiber 是一种基于浏览器的单线程调度算法
+- React Fiber 用类似 requestIdleCallback 的机制来做异步 diff。但是之前数据结构不支持这样的实现异步 diff，于是 React 实现了一个类似链表的数据结构，将原来的 递归 diff 变成了现在的 遍历 diff，这样就能做到异步可更新了。
 
 11. diff 算法
 
--   传统 diff 时间复杂度 O（n^3）,最后 O(n)
--   1、tree diff:同层对比 dom 节点，忽略 dom 节点的跨层级移动
--   2、组件 diff：如果不是同一类型的组件，会删除旧的组件、创建新的组件
--   3、同一层级的一组子节点，通过唯一 id 进行区分、也就是唯一 key
+- 传统 diff 时间复杂度 O（n^3）,最后 O(n)
+- 1、tree diff:同层对比 dom 节点，忽略 dom 节点的跨层级移动
+- 2、组件 diff：如果不是同一类型的组件，会删除旧的组件、创建新的组件
+- 3、同一层级的一组子节点，通过唯一 id 进行区分、也就是唯一 key
 
 12. setState 之后发生了什么？
 
--   setState 时，创建一个 updateQueue 的更新列队。
--   触发 reconciliation：触发 fiber 的调度算法，生成新的 fiber 树，异步可中断的执行
--   react scheduler 会根据优先级高低，限制性优先级高的节点，具体是 doWork 方法。
--   在 doWork 方法中，React 会执行一遍 updateQueue 中的方法，以获得新的节点。然后对比新旧节点，为老节点打上 更新、插入、替换 等 Tag。
--   当前节点 doWork 完成后，会执行 performUnitOfWork 方法获得新节点，然后再重复上面的过程。
--   当所有节点都 doWork 完成后，会触发 commitRoot 方法，React 进入 commit 阶段。
--   在 commit 阶段中，React 会根据前面为各个节点打的 Tag，一次性更新整个 dom 元素。
+- setState 时，创建一个 updateQueue 的更新列队。
+- 触发 reconciliation：触发 fiber 的调度算法，生成新的 fiber 树，异步可中断的执行
+- react scheduler 会根据优先级高低，限制性优先级高的节点，具体是 doWork 方法。
+- 在 doWork 方法中，React 会执行一遍 updateQueue 中的方法，以获得新的节点。然后对比新旧节点，为老节点打上 更新、插入、替换 等 Tag。
+- 当前节点 doWork 完成后，会执行 performUnitOfWork 方法获得新节点，然后再重复上面的过程。
+- 当所有节点都 doWork 完成后，会触发 commitRoot 方法，React 进入 commit 阶段。
+- 在 commit 阶段中，React 会根据前面为各个节点打的 Tag，一次性更新整个 dom 元素。
 
 13. 为什么虚拟 dom 会提高性能?
 
--   虚拟 dom 相当于在 JS 和真实 dom 中间加了一个缓存，利用 diff 算法避免了没有必要的 dom 操作，从而提高性能。
+- 虚拟 dom 相当于在 JS 和真实 dom 中间加了一个缓存，利用 diff 算法避免了没有必要的 dom 操作，从而提高性能。
 
 14. 错误边界
 
--   在 React 中，如果任何一个组件发生错误，它将破坏整个组件树，导致整页白屏。这时候我们可以用错误边界优雅地降级处理这些错误。
+- 在 React 中，如果任何一个组件发生错误，它将破坏整个组件树，导致整页白屏。这时候我们可以用错误边界优雅地降级处理这些错误。
 
 15. React 组件间有那些通信方式?
 
--   父组件向子组件通信
-    -   1、 通过 props 传递
--   子组件向父组件通信
-    -   1、 主动调用通过 props 传过来的方法，并将想要传递的信息，作为参数，传递到父组件的作用域中
--   跨层级通信
-    -   1、 使用 react 自带的 Context 进行通信，createContext 创建上下文， useContext 使用上下文。
-    -   使用 Redux 或者 Mobx 等状态管理库
-    -   使用订阅发布模式
+- 父组件向子组件通信
+  - 1、 通过 props 传递
+- 子组件向父组件通信
+  - 1、 主动调用通过 props 传过来的方法，并将想要传递的信息，作为参数，传递到父组件的作用域中
+- 跨层级通信
+  - 1、 使用 react 自带的 Context 进行通信，createContext 创建上下文， useContext 使用上下文。
+  - 使用 Redux 或者 Mobx 等状态管理库
+  - 使用订阅发布模式
 
 16. React 父组件如何调用子组件中的方法？
 
--   如果是在方法组件中调用子组件（>= react@16.8），可以使用 useRef 和 useImperativeHandle:
--   如果是在类组件中调用子组件（>= react@16.4），可以使用 createRef；
+- 如果是在方法组件中调用子组件（>= react@16.8），可以使用 useRef 和 useImperativeHandle:
+- 如果是在类组件中调用子组件（>= react@16.4），可以使用 createRef；
 
 17. React 有哪些优化性能的手段?
 
@@ -774,6 +845,24 @@ e.preventDefault：阻止默认事件，不会阻止事件传递。
 19. 高阶组件：
 
 20. 通信方式：
+21. useMemo 和 useCallback 的好处
+
+- usememo 和 useCallback 都可以通过监听特定的参数来判断是否在渲染阶段重新计算对应的数值或者是对应的函数，好处便是做到性能的优化。
+- 区别：useMemo 通常用于计算一个数值，可以是状态的改变等；而 useCallback 缓存的是函数，就比如子组件啥的，只要 props 没有改变，那么子组件就不需要刷新，使用 useCallback 可以不用让子组件刷新。
+
+22. useEffect 和 useLayoutEffect 的区别：
+
+- useEffect 在渲染时是异步执行，并且要等到浏览器将所有变化渲染到屏幕后才会被执行。
+- useLayoutEffect 在渲染时是同步执行，其执行时机与 componentDidMount，componentDidUpdate 一致
+
+23. useEffect 和 useLayoutEffect 哪一个与 componentWillUnmount 的是等价的？
+
+- useLayoutEffect 的 detroy 函数的调用位置、时机与 componentWillUnmount 一致，且都是同步调用。
+
+24. 为什么建议将修改 DOM 的操作里放到 useLayoutEffect 里，而不是 useEffect？
+
+- 减少回流、重绘
+- DOM 已经被修改，但但浏览器渲染线程依旧处于被阻塞阶段，所以还没有发生回流、重绘过程。由于内存中的 DOM 已经被修改，通过 useLayoutEffect 可以拿到最新的 DOM 节点，并且在此时对 DOM 进行样式上的修改，假设修改了元素的 height，这些修改会在步骤 11 和 react 做出的更改一起被一次性渲染到屏幕上，依旧只有一次回流、重绘的代价。
 
 # Vue
 
@@ -1046,67 +1135,112 @@ const vm=new Vue({
 # Webpack
 
 1. webpack 是干什么的，它都做了哪些工作
+
+- 定义：webpack 是模块打包工具
+- 功能：分析你的项目结构，找到 JavaScript 模块以及其它的一些浏览器不能直接运行的拓展语言（Scss，TypeScript 等），并将其打包为合适的格式以供浏览器使用。
+
 2. 为什么要有 webpack，没有就不行吗
+
+- 模块化：让我们可以把复杂的程序细化为小的文件;
+- 编译时的语言如 TS 等，能够实现目前 JS 不能直接使用的特性，webpack 等帮我们进行转换成 JS 以便于浏览器识别
+- CSS 预处理器：less sass 等都可以提高我们的开发效率，webpack 可以帮我们在编译时进行处理成 CSS
+
 3. 与其他工具的对比，grunt, gulp
+
+- Gulp/Grunt 是一种能够优化前端的开发流程的工具
+
+  - 在一个配置文件中，指明对某些文件进行类似编译，组合，压缩等任务的具体步骤，这个工具之后可以自动替你完成这些任务。
+
+- webpack：把你的项目当做一个整体，通过一个给定的主文件（如：index.js），Webpack 将从这个文件开始找到你的项目的所有依赖文件，使用 loaders 处理它们，最后打包为一个浏览器可识别的 JS 文件。用 plugin 来扩展功能
+
 4. loader,plugin 写过吗，怎么写
-5. webpack 的原理
 
-19. useMemo 和 useCallback 的好处
+- loader: webpack 原生只能识别 js 文件，loader 让 webpack 拥有了加载和解析非 js 文件的能力
 
--   usememo 和 useCallback 都可以通过监听特定的参数来判断是否在渲染阶段重新计算对应的数值或者是对应的函数，好处便是做到性能的优化。
--   区别：useMemo 通常用于计算一个数值，可以是状态的改变等；而 useCallback 缓存的是函数，就比如子组件啥的，只要 props 没有改变，那么子组件就不需要刷新，使用 useCallback 可以不用让子组件刷新。
+  - babel-loader：把 ES6 转换成 ES5
+  - css-loader：加载 CSS，支持模块化、压缩、文件导入等特性
+  - style-loader：把 CSS 代码注入到 JavaScript 中，通过 DOM 操作去加载 CSS。
+  - sass-loader、less-loader：将 sass 语法、less 语法编译时转为 CSS 语法。
 
-20. useEffect 和 useLayoutEffect 的区别：
+- plugin：扩展 webpack 功能，比如定义环境变量、提取公共代码等 plugin，在 webpack 打包的过程中，用 plugin 进行监听事件，在合适的时机通过 Webpack 的 API 改变输出结果
 
--   useEffect 在渲染时是异步执行，并且要等到浏览器将所有变化渲染到屏幕后才会被执行。
--   useLayoutEffect 在渲染时是同步执行，其执行时机与 componentDidMount，componentDidUpdate 一致
+  - HtmlWebpackPugin：生成 HTML5 文件，自动引入 JS 文件。
+  - define-plugin：定义环境变量
+  - commons-chunk-plugin：提取公共代码
 
-21. useEffect 和 useLayoutEffect 哪一个与 componentWillUnmount 的是等价的？
-- useLayoutEffect 的 detroy 函数的调用位置、时机与 componentWillUnmount 一致，且都是同步调用。
+- 差别：
+  - 作用不同
+    - loader:webpack 原生只能识别 js 文件，loader 让 webpack 拥有了加载和解析非 js 文件的能力
+    - plugin:扩展 webpack 功能，比如定义环境变量、提取公共代码等 plugin，在 webpack 打包的过程中，用 plugin 进行监听事件，在合适的时机通过 Webpack 的 API 改变输出结果
+  - 用法不同
+    - loader：作为模块的解析规则而存在，在 module.rule 里面配置
+    - plugin：在 plugin 单独配置。
 
-22. 为什么建议将修改 DOM 的操作里放到 useLayoutEffect 里，而不是 useEffect？
-- 减少回流、重绘
-- DOM 已经被修改，但但浏览器渲染线程依旧处于被阻塞阶段，所以还没有发生回流、重绘过程。由于内存中的 DOM 已经被修改，通过 useLayoutEffect 可以拿到最新的 DOM 节点，并且在此时对 DOM 进行样式上的修改，假设修改了元素的 height，这些修改会在步骤 11 和 react 做出的更改一起被一次性渲染到屏幕上，依旧只有一次回流、重绘的代价。
+5. webpack的构建流程：串行的过程
+
+- 初始化参数：从配置文件和shell语句中读取与合并参数，得出最终的参数
+- 开始编译：得到参数后初始化Complier对象，加载所有配置的插件，执行对象的run方法
+- 编译：找到entry入口，从入口文件出发，调用loader进行模块编译，递归进行编译，直至完成
+- 输出资源：入口和模块的依赖关系，组装成一个个包含多个模块的Chunk，再把每个Chunk转换成一个单独的文件加入到输出列表。
+- 输出完成：配置输出路径和文件名，将文件写入文件系统
+- 在以上过程中，Webpack 会在特定的时间点广播出特定的事件，插件在监听到感兴趣的事件后会执行特定的逻辑，并且插件可以调用 Webpack 提供的 API 改变 Webpack 的运行结果。
+
+6. 代码分割Code Splitting
+- 按需加载
+- 将文件分割成块，进行按需加载
+
+7. 模块热更新：
+- `devServer: {hot:true}`
+- 代码修改过后不用刷新浏览器就可以更新
+
+8. tree-shaking:
+- 在打包中去除那些引入了，但是在代码中没有被用到的那些死代码。
+- uglifySPlugin
+
+9. 什么是长缓存？在webpack中如何做到长缓存优化？
+- 浏览器在用户访问页面的时候，为了加快加载速度，会对用户访问的静态资源进行存储，但是每一次代码升级或是更新，都需要浏览器去下载新的代码，最方便和简单的更新方式就是引入新的文件名称。
+- 在webpack中可以在output纵输出的文件指定chunk hash,并且分离经常更新的代码和框架代码。通过NameModulesPlugin或是HashedModuleIdsPlugin使再次打包文件名不变。
+
 # 算法
 
 1. 快排：(分治法)
 
 ```js
 function quickSort(arr) {
-    if (arr.length < 2) return arr;
-    let left = [],
-        right = [];
-    let temp = arr[0];
-    arr.forEach(e => {
-        if (e < temp) left.push(e);
-        else if (e > temp) right.push(e);
-    });
-    return quickSort(left).concat(biaoji, quickSort(right));
+  if (arr.length < 2) return arr;
+  let left = [],
+    right = [];
+  let temp = arr[0];
+  arr.forEach((e) => {
+    if (e < temp) left.push(e);
+    else if (e > temp) right.push(e);
+  });
+  return quickSort(left).concat(biaoji, quickSort(right));
 }
 function quickSort(arr, i, j) {
-    if (i < j) {
-        let left = i,
-            right = j;
-        let temp = arr[left];
-        while (i < j) {
-            while (arr[j] >= temp && i < j) {
-                j--;
-            }
-            if (i < j) {
-                arr[i++] = arr[j];
-            }
-            while (arr[i] <= temp && i < j) {
-                i++;
-            }
-            if (i < j) {
-                arr[j--] = arr[i];
-            }
-        }
-        arr[i] = temp;
-        quickSort(arr, left, i - 1);
-        quickSort(arr, i + 1, right);
-        return arr;
+  if (i < j) {
+    let left = i,
+      right = j;
+    let temp = arr[left];
+    while (i < j) {
+      while (arr[j] >= temp && i < j) {
+        j--;
+      }
+      if (i < j) {
+        arr[i++] = arr[j];
+      }
+      while (arr[i] <= temp && i < j) {
+        i++;
+      }
+      if (i < j) {
+        arr[j--] = arr[i];
+      }
     }
+    arr[i] = temp;
+    quickSort(arr, left, i - 1);
+    quickSort(arr, i + 1, right);
+    return arr;
+  }
 }
 ```
 
@@ -1114,19 +1248,19 @@ function quickSort(arr, i, j) {
 
 ```js
 function insertSort(arr) {
-    let len = arr.length;
-    var preIndex, current;
-    for (let i = 1; i < len; i++) {
-        preIndex = i - 1;
-        current = arr[i];
-        while (current < arr[preIndex] && preIndex >= 0) {
-            arr[preIndex + 1] = arr[preIndex];
-            preIndex--;
-        }
-        arr[preIndex + 1] = current;
+  let len = arr.length;
+  var preIndex, current;
+  for (let i = 1; i < len; i++) {
+    preIndex = i - 1;
+    current = arr[i];
+    while (current < arr[preIndex] && preIndex >= 0) {
+      arr[preIndex + 1] = arr[preIndex];
+      preIndex--;
     }
-    console.log(arr);
-    return arr;
+    arr[preIndex + 1] = current;
+  }
+  console.log(arr);
+  return arr;
 }
 ```
 
@@ -1134,15 +1268,15 @@ function insertSort(arr) {
 
 ```js
 function debounce(func, wait) {
-    var timeout = null;
-    return function () {
-        let context = this;
-        let args = arguments;
-        if (timeout) clearTimeout(timeout);
-        timeout = setTimeout(() => {
-            func.apply(context, args);
-        }, wait);
-    };
+  var timeout = null;
+  return function () {
+    let context = this;
+    let args = arguments;
+    if (timeout) clearTimeout(timeout);
+    timeout = setTimeout(() => {
+      func.apply(context, args);
+    }, wait);
+  };
 }
 ```
 
@@ -1150,17 +1284,17 @@ function debounce(func, wait) {
 
 ```js
 function throttle(func, wait) {
-    let timeout = null;
-    return function () {
-        let context = this;
-        let args = arguments;
-        if (!timeout) {
-            timeout = setTimeout(() => {
-                func.apply(context, args);
-                timeout = null;
-            }, wait);
-        }
-    };
+  let timeout = null;
+  return function () {
+    let context = this;
+    let args = arguments;
+    if (!timeout) {
+      timeout = setTimeout(() => {
+        func.apply(context, args);
+        timeout = null;
+      }, wait);
+    }
+  };
 }
 ```
 
@@ -1188,20 +1322,20 @@ console.log(temp);
 
 1. 事件处理机制：
 
--   三阶段：捕获、目标、冒泡
--   可以通过事件目标对象的 eventPhase 属性来得知当前事件在什么阶段。（1 捕获，2 目标，3 处理）
--   addEventListener 注册事件，其中参数有 useCapture：true 时该事件在捕获阶段触发，false 在冒泡阶段触发。默认是冒泡。
--   e.stopPropation:阻止事件向下捕获或者向上冒泡。
--   e.preventDefault:阻止默认事件，不会阻止事件传递。
+- 三阶段：捕获、目标、冒泡
+- 可以通过事件目标对象的 eventPhase 属性来得知当前事件在什么阶段。（1 捕获，2 目标，3 处理）
+- addEventListener 注册事件，其中参数有 useCapture：true 时该事件在捕获阶段触发，false 在冒泡阶段触发。默认是冒泡。
+- e.stopPropation:阻止事件向下捕获或者向上冒泡。
+- e.preventDefault:阻止默认事件，不会阻止事件传递。
 
 2. 为什么要阻止事件传递：
 
--   因为防止点透现象（父与子都有 click，都被触发，但我们只想触发子的）
+- 因为防止点透现象（父与子都有 click，都被触发，但我们只想触发子的）
 
 3. 事件委托：
 
--   多个子元素的同一事件可以绑定在父元素上，提高效率，减少代码量。
--   父元素通过`e.target`或者`e.srcElement`（IE）识别子元素。然后再判断子元素是不是相应的标签`nodeName`
+- 多个子元素的同一事件可以绑定在父元素上，提高效率，减少代码量。
+- 父元素通过`e.target`或者`e.srcElement`（IE）识别子元素。然后再判断子元素是不是相应的标签`nodeName`
 
 4. git 操作：
 
@@ -1215,23 +1349,23 @@ console.log(temp);
 
 1. Grpc:
 
--   RPC: 框架提供了一套机制（类似 http 协议）使得应用程序间可以进行通信，遵从 server/client 模型，底层是 Http2.0 协议，而 restful api 不一定是 http2.0
-    -   1： 通过 proto 通信，定义接口等，有更加严格的接口约束条件；安全性（接口约束）
-    -   2： 二进制编码，减少传输的数据量 高性能
-    -   3： 支持流式通信（streaming 模式），而 restful api 似乎很少这么用，视频流等都会用专门的协议 HLS，RTMP 等。
-        （http2.0 的知识点）
+- RPC: 框架提供了一套机制（类似 http 协议）使得应用程序间可以进行通信，遵从 server/client 模型，底层是 Http2.0 协议，而 restful api 不一定是 http2.0
+  - 1： 通过 proto 通信，定义接口等，有更加严格的接口约束条件；安全性（接口约束）
+  - 2： 二进制编码，减少传输的数据量 高性能
+  - 3： 支持流式通信（streaming 模式），而 restful api 似乎很少这么用，视频流等都会用专门的协议 HLS，RTMP 等。
+    （http2.0 的知识点）
 
 2. 前端架构：
 
 基础结构：
 
--   MPA(multi-page-application)多页面应用：
-    -   跳转需要刷新所有的资源，css、js 等公共资源需要选择性加载
-    -   数据传递可以用 url 路径携带、localstorage、cookie 等
--   SPA(single-page-application):单页面
-    -   单页面跳转仅仅只是刷新局部资源，css、js 等公共资源仅需加载一次
--   MPA 结合 SPA:
-    -   路由导航+资源加载框架
+- MPA(multi-page-application)多页面应用：
+  - 跳转需要刷新所有的资源，css、js 等公共资源需要选择性加载
+  - 数据传递可以用 url 路径携带、localstorage、cookie 等
+- SPA(single-page-application):单页面
+  - 单页面跳转仅仅只是刷新局部资源，css、js 等公共资源仅需加载一次
+- MPA 结合 SPA:
+  - 路由导航+资源加载框架
 
 解决的问题：
 
@@ -1658,10 +1792,10 @@ function isPrinme(n) {
 }
 function find(num) {
   for (let i = 2; i <= ((num / 2) | 0); i++) {
-      if(isPrinme(i)&&isPrinme(num-i)){
-          console.log(i,num-i);
-          return;
-      }
+    if (isPrinme(i) && isPrinme(num - i)) {
+      console.log(i, num - i);
+      return;
+    }
   }
 }
 find(210);
@@ -1683,21 +1817,25 @@ function demo(pre, vin) {
 demo([1, 2, 3, 4, 5, 6, 7], [3, 2, 4, 1, 6, 5, 7]);
 console.log(temp);
 ```
+
 13. 剪绳子
-> 长度为n，剪成m段，使得各段相乘，乘积最大
-数学题，凑到3
+    > 长度为 n，剪成 m 段，使得各段相乘，乘积最大
+    > 数学题，凑到 3
+
 ```js
-function demo(n){
-  if(n<3)return n-1;
-  var times=n/3|0;
-  var e=n%3;
-  if(e==0)return Math.pow(3,times);
-  else if(e==1)return Math.pow(3,times-1)*4;
-  return Math.pow(3,times)*2;
+function demo(n) {
+  if (n < 3) return n - 1;
+  var times = (n / 3) | 0;
+  var e = n % 3;
+  if (e == 0) return Math.pow(3, times);
+  else if (e == 1) return Math.pow(3, times - 1) * 4;
+  return Math.pow(3, times) * 2;
 }
 ```
+
 14. 最长不包含重复字符的字符串的长度
->设temp进行保存，遍历用indexOf进行判断temp中是否有该字符，有就slice之前的部分，同时与res比较大小
+    > 设 temp 进行保存，遍历用 indexOf 进行判断 temp 中是否有该字符，有就 slice 之前的部分，同时与 res 比较大小
+
 ```js
 function demo(s) {
   let res = 0,
@@ -1715,4 +1853,5 @@ function demo(s) {
   return res;
 }
 ```
-15. 
+
+15.

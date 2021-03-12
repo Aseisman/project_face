@@ -246,19 +246,39 @@
 // }
 // find(210);
 
-function demo(s) {
-  let res = 0,
-    temp = "";
-  const len = s.length;
-  for (let i = 0; i < len; i++) {
-    if (temp.indexOf(s[i]) == -1) {
-      temp += s[i];
-      res = Math.max(res, temp.length);
-    } else {
-      temp = temp.slice(temp.indexOf(s[i]) + 1);
-      temp += s[i];
-    }
+// function demo(s) {
+//   let res = 0,
+//     temp = "";
+//   const len = s.length;
+//   for (let i = 0; i < len; i++) {
+//     if (temp.indexOf(s[i]) == -1) {
+//       temp += s[i];
+//       res = Math.max(res, temp.length);
+//     } else {
+//       temp = temp.slice(temp.indexOf(s[i]) + 1);
+//       temp += s[i];
+//     }
+//   }
+//   return res;
+// }
+// console.log(demo("abcdefgabasdabcde"));
+
+const name="abc"
+const obj={
+  name:"ccc",
+  say:function(){
+    console.log(this.name);
   }
-  return res;
 }
-console.log(demo("abcdefgabasdabcde"));
+const f=obj.say
+f()
+
+const a=1
+const o={
+  a:12,
+  fn:function(){
+    console.log(this.a);
+  }
+}
+const fn=o.fn
+fn()
