@@ -149,6 +149,24 @@ nginx 的反向代理接口：`nginx.config`
   - 改变节点内部文字结构会触发重布局
 - 重绘(repaint)：css 发生改变
 
+13. localstorage、sessionstorage、cookie
+
+- 相同点：cookie，localStorage，sessionStorage 都是在客户端保存数据的，存储数据的类型：都是字符串。
+- 不同点：
+
+  - 生命周期：
+    - cookie：如果不设置有效期，那么就是临时存储（存储在内存中）；设置了有效期，那么 cookie 存储在硬盘里，有效期到了，就自动消失了。
+    - localstorage：生命周期是永久的，关闭页面或浏览器之后 localStorage 中的数据也不会消失。localStorage 除非主动删除数据，否则数据永远不会消失。
+    - sessionstorage：仅在当前会话下有效。sessionStorage 引入了一个“浏览器窗口”的概念，sessionStorage 是在同源的窗口中始终存在的数据。只要这个浏览器窗口没有关闭，即使刷新页面或者进入同源另一个页面，数据依然存在。但是 sessionStorage 在关闭了浏览器窗口后就会被销毁。同时独立的打开同一个窗口同一个页面，sessionStorage 也是不一样的。
+  - 网络通信：
+    - cookie 的数据每次都会发给服务器端
+    - localstorage 和 sessionStorage 不会与服务器端通信
+  - 大小：
+    - cookie 大小限制在 4KB
+    - localstorage 和 sessionStorage 在 5M
+  - 安全：WebStorage 不会随着 HTTP header 发送到服务器端，所以安全性相对于 cookie 来说比较高一些，不会担心截获。
+  - 使用更方便：webStorage 有 api 调用。
+
 - 优化：
   - 用 translate 替代 top 改变
   - 不要使用 table 布局，可能很小的一个小改动都会造成整个 table 的重新布局
@@ -246,6 +264,34 @@ nginx 的反向代理接口：`nginx.config`
 - 区别：有没有创建一个文档树之外的元素。伪类的操作对象是文档树中已有的元素，而伪元素则创建了一个文档数外的元素。
 - 伪类：（单冒号）hover、active、focus、
 - 伪元素：（双冒号）before、after、selection、placeholder
+
+10. table布局的优缺点
+- 缺点
+  - table 比其他html标签占更多的字节。造成下载时间延迟，占用服务器更多的流量资源（代码冗余）。
+  - table 会阻挡浏览其渲染引擎的渲染顺序，会延迟页面的生成速度，让用户等待时间更久。
+  - 灵活性差，一旦设计确定，后期很难通过CSS让它展现新的面貌。
+  - 不利于搜索引擎抓取信息，直接影响到网站的排名。
+- 优点：1.兼容性好2.容易上手
+
+11. flex: 1 0 auto：flex-grow、flex-shrink、flex-basis的缩写：
+- flex-grow:放大比例
+  - 默认为0：即使存在剩余空间，也不会放大；
+  - 1：等分剩余空间（自动放大占位）；
+  - n：n倍
+- flex-shrink:缩小比例
+  - 默认为1，即 如果空间不足，该项目将缩小；
+  - 为0：空间不足时，该项目不会缩小；
+  - n:n倍
+- flex-basis: 分配多余空间的时候，计算主轴空间
+  - 默认auto: 项目原本大小
+
+- 例子：flex:1,即放大比例为1，占据整个内容。常用作自适应布局。
+
+12. justify-content和align-item的区别
+- justify-content:项目在主轴上的对齐方式（假设我flex-direction：row(横)的，那么我就是在水平上的对齐方式，（宽度））
+- align-item:项目在交叉轴的对齐方式（高度）
+- aligin-content:定义多跟轴线的对齐方式，就是多行对齐方式，如果只有单行，则不生效。
+
 
 # JavaScript
 
@@ -678,15 +724,168 @@ function curry(){
 17. 创建日期没有兼容性问题的是：
     `new Date(2017,6,25,12,12,12)`
 
-18. window 子对象：
+18. 扩展 js 的 String 等对象：prototype 扩展
 
-- document：html 的信息
-- history：浏览器访问过的 url
-- location:url 上的一系列信息
-- nagivator：浏览器的信息
-- screen:客户端屏幕信息
+# ES6
 
-19. 扩展 js 的 String 等对象：prototype 扩展
+1. 箭头函数
+
+- 函数体内的 this 对象，就是定义时所在的对象，而不是使用时所在的对象。(或者说箭头函数没有 this，它只是引用了外部的 this)
+- 不可以使用 arguments 对象，该对象在函数体内不存在。如果要用，可以用 Rest 参数代替。
+- 不可以当作构造函数，也就是说，不可以使用 new 命令，否则会抛出一个错误。
+- 不可以使用 yield 命令，因此箭头函数不能用作 Generator 函数。
+- ES7 提案：绑定 this：
+  - ES6 中可以用 bind、apply、call 来绑定 this 对象
+  - ES7 提出“函数绑定”
+
+```js
+//this
+var bb = 2;
+function aa() {
+  this.bb = 1;
+  setTimeout(() => {
+    console.log(this.bb);
+  }, 0);
+}
+let aaa = new aa();
+
+foo::bar; // 等同于  bar.bind(foo);
+foo::bar(...arguments); // 等同于  bar.apply(foo, arguments);
+```
+
+2. let & const:
+
+- 不存在变量提升
+- 不允许重复声明
+- 块级作用域
+- 暂时性死区
+- 块级作用域中函数声明：
+  - ES5 规定：函数只能在顶层作用域中与函数作用域之中声明，不能在块级作用域间声明
+  - ES6 规定，函数可以在块级作用域中声明，函数类似于 let，出了块级作用域就无法调用了，与 let 不同的是，它还是会存在函数提升。
+- const
+  - 需要立即初始化
+  - 如果是复合类型的变量，指向数据的地址
+  - 想让对象不能改，用 object.freeze()
+    <!--Object.preventExtendsion(obj) 用来禁止对象可扩展其它属性-->
+    <!--Object.seal(obj)用来禁止对象删除其它属性和扩展其它属性-->
+    <!--Object.freeze(obj)用来冻结对象，就是所有的属性不能够更改和新增 -->
+
+3. 对象数组的解构赋值
+4. 模板字符串
+5. map and set
+6. proxy and reflect
+- proxy：在目标对象之前加一层“拦截”，外界对该对象的访问，都必须先通过这层拦截，重写 get、set 方法，同时，this 会指向 proxy 对象
+- reflect：将 object 内部的一些方法（object.defineProperty），通常是 proxy 拦截 target 的时候，内部调用对应的 reflect 方法，保证原生行为能够正常执行。
+
+7. 遍历方式 and 迭代器
+- 常规遍历方式：
+    - for 循环
+    - for in 循环
+    - while 循环
+    - for of 循环
+
+- 函数式编程
+    - forEach
+    - map
+    - reduce
+    - Objects.keys
+
+- for of 循环只能遍历具备iterator规范的。（即如果有Symbol.iterator标志）
+    - 数组
+    - 部分类数组：arguments/NodeList/HTMLCollection
+    - Set/Map
+    - String
+
+**注意：**普通对象不具备iterator规范的标志Symbol.iterator
+- 迭代器：
+  - 标志：Symbol.iterator
+  - 遍历器对象本质上，就是一个指针对象
+  - 每一次调用next方法，返回一个包含value和done两个属性的对象
+
+- 生成器函数模拟迭代器
+``` js
+// 这里用生成器函数得出结果返回一个Symbol.iterator
+function *fn(){
+    yield 1;
+    yield 2;
+}
+let itor=fn();//生成器函数返回的结果是一个迭代器；拥有next方法，执行next方法可以一次遍历数据结构中的每一项的值 ->数据结构具备Symbol.iterator属性，说明其是可以被迭代的。
+
+console.log(itor.next())//->{value:1,done:false}
+console.log(itor.next())//->{value:2,done:false}
+console.log(itor.next())//->{value:undefined,done:true}
+```
+<img src="./imgs/iterator.png"></img>
+
+```js
+function *fn(){
+    let x=yield 1;
+    console.log(x);//->10 不是yield的返回值，是执行next方法传递进来的值。
+    yield 2;
+}
+let itor=fn();
+console.log(itor.next())//->{value:1,done:false},这一步从头开始，到第一个yield结束。
+console.log(itor.next(10))//->{value:2,done:false}，这一步解决第一个yield，即yield 1那里，其实是把1换成了10，然后赋值给x遇到yield 2停止。
+console.log(itor.next())//->{value:undefined,done:true}执行yield 2.然后结束。
+```
+
+- 普通对象迭代方法：
+```js
+let obj = {
+    0: 10,
+    1: 20,
+    2: 30,
+    3: 40,
+    length: 4,
+    //第一种方法，调用其他已有迭代器的标志
+    // [Symbol.iterator]: Array.prototype[Symbol.iterator]
+    //第二种方法：手写一个
+    [Symbol.iterator]: function () {
+        let self = this,
+            index = 0;
+        return {
+            next() {
+                if (index > self.length - 1) {
+                    return {
+                        value: undefined,
+                        done: true
+                    };
+                }
+                return {
+                    value: self[index++],
+                    done: false
+                };
+            }
+        };
+    }
+};
+for (let item of obj) {
+    console.log(item);
+}
+```
+
+8. 异步编程解决方案: 生成器 and Promise
+- 生成器：
+  - 执行Generator函数会返回一个迭代器对象，拥有next方法，执行next方法可以一次遍历数据结构中的每一项的值
+  - 函数体内部使用yield语句，暂停执行的标记
+
+- Promise
+  - promise 有 3 种状态：pending、fulfilled 或 rejected。状态改变只能是 pending->fulfilled 或者 pending->rejected，状态一旦改变则不能再变。
+  - 构造函数中的 resolve 或 reject 只有第一次执行有效，多次调用没有任何作用
+    - 呼应代码二结论：promise 状态一旦改变则不能再变。
+  
+  - promise 可以链式调用。
+  
+    - 提起链式调用我们通常会想到通过 return this 实现，不过 Promise 并不是这样实现的。
+    - promise 每次调用 .then 或者 .catch 都会返回一个新的 promise，从而实现了链式调用。
+  
+  - .then 或 .catch 返回的值不能是 promise 本身，否则会造成死循环。
+  
+  - .then 可以接收两个参数，第一个是处理成功的函数，第二个是处理错误的函数。.catch 是 .then 第二个参数的简便写法，
+    - 但是它们用法上有一点需要注意：.then 的第二个处理错误的函数捕获不了第一个处理成功的函数抛出的错误，而后续的 .catch 可以捕获之前（then里面的）的错误。
+
+- Promise.all：promise对象数组所有状态都变成了resolve or reject，才会去调用then。
+- Promise.race：竞赛，有一个promise对象状态改变，就调用then。
 
 # React
 
@@ -1065,7 +1264,15 @@ const vm=new Vue({
 
 15. 粒度过细，更新不精准。
 
-16.
+16. 组件传值
+
+- props & $emit
+- $children & $parent 获取子组件和父组件的对象
+- $ref 获取特定的子组件的 dom
+- eventbus: 创建一个单独的 js 文件，需要就引入 eventbus.$emit()，需要接受消息就eventbus.$on
+- $attr & $listener:解决多级子组件的传递问题：a->b->c b通过使用$attr 传递 a 的值到 c，$listener 监听子组件中数据变化，传递给父父组件。
+- project & inject :兄弟传值，类似于 react 的 context
+
 17.
 18.
 
@@ -1091,6 +1298,24 @@ const vm=new Vue({
 - 3 个不常用的
   - activated & deactivated：keep-alive 组件缓存的时候会执行的生命周期；
     - keep-alive:LRU 缓存；
+
+# Vuex
+1. 是什么：状态管理模式
+2. 有什么：
+  - state：存储状态（变量）
+  - getters：对数据获取之前的再次编译，可以理解为state的计算属性。我们在组件中使用 $store.getters.fun()
+  - mutations：修改状态，并且是同步的。在组件中使用$store.commit('',params)。这个和我们组件中的自定义事件类似。
+  - actions：异步操作。在组件中使用是$store.dispath('')
+  - modules：store的子模块，为了开发大型项目，方便状态管理而使用的。这里我们就不解释了，用起来和上面的一样。
+3. 怎么用：
+  - 取值：$store.state.xxx
+  - 赋值：$store.commit("")
+
+4. store是怎么注册的：
+- vuex在vue 的生命周期中的初始化钩子前插入一段 Vuex 初始化代码。给 Vue 的实例注入一个 $store 的属性，从而this.$store.xxx
+
+
+
 
 # Node
 
@@ -1176,30 +1401,34 @@ const vm=new Vue({
     - loader：作为模块的解析规则而存在，在 module.rule 里面配置
     - plugin：在 plugin 单独配置。
 
-5. webpack的构建流程：串行的过程
+5. webpack 的构建流程：串行的过程
 
-- 初始化参数：从配置文件和shell语句中读取与合并参数，得出最终的参数
-- 开始编译：得到参数后初始化Complier对象，加载所有配置的插件，执行对象的run方法
-- 编译：找到entry入口，从入口文件出发，调用loader进行模块编译，递归进行编译，直至完成
-- 输出资源：入口和模块的依赖关系，组装成一个个包含多个模块的Chunk，再把每个Chunk转换成一个单独的文件加入到输出列表。
+- 初始化参数：从配置文件和 shell 语句中读取与合并参数，得出最终的参数
+- 开始编译：得到参数后初始化 Complier 对象，加载所有配置的插件，执行对象的 run 方法
+- 编译：找到 entry 入口，从入口文件出发，调用 loader 进行模块编译，递归进行编译，直至完成
+- 输出资源：入口和模块的依赖关系，组装成一个个包含多个模块的 Chunk，再把每个 Chunk 转换成一个单独的文件加入到输出列表。
 - 输出完成：配置输出路径和文件名，将文件写入文件系统
 - 在以上过程中，Webpack 会在特定的时间点广播出特定的事件，插件在监听到感兴趣的事件后会执行特定的逻辑，并且插件可以调用 Webpack 提供的 API 改变 Webpack 的运行结果。
 
-6. 代码分割Code Splitting
+6. 代码分割 Code Splitting
+
 - 按需加载
 - 将文件分割成块，进行按需加载
 
 7. 模块热更新：
+
 - `devServer: {hot:true}`
 - 代码修改过后不用刷新浏览器就可以更新
 
 8. tree-shaking:
+
 - 在打包中去除那些引入了，但是在代码中没有被用到的那些死代码。
 - uglifySPlugin
 
-9. 什么是长缓存？在webpack中如何做到长缓存优化？
+9. 什么是长缓存？在 webpack 中如何做到长缓存优化？
+
 - 浏览器在用户访问页面的时候，为了加快加载速度，会对用户访问的静态资源进行存储，但是每一次代码升级或是更新，都需要浏览器去下载新的代码，最方便和简单的更新方式就是引入新的文件名称。
-- 在webpack中可以在output纵输出的文件指定chunk hash,并且分离经常更新的代码和框架代码。通过NameModulesPlugin或是HashedModuleIdsPlugin使再次打包文件名不变。
+- 在 webpack 中可以在 output 纵输出的文件指定 chunk hash,并且分离经常更新的代码和框架代码。通过 NameModulesPlugin 或是 HashedModuleIdsPlugin 使再次打包文件名不变。
 
 # 算法
 
@@ -1278,6 +1507,26 @@ function debounce(func, wait) {
     }, wait);
   };
 }
+//立即执行与非立即执行
+function debounce(func, wait, immediate) {
+  var timeout = null;
+  return function () {
+    let context = this;
+    let args = arguments;
+    if (timer) clearTimeout(timer);
+    if (immediate) {
+      var callNow = !timer;
+      timer = setTimeout(() => {
+        timer = null;
+      }, wait);
+      if (callNow) func.apply(context, args);
+    } else {
+      timer = setTimeout(() => {
+        func.apply(context, args);
+      }, wait);
+    }
+  };
+}
 ```
 
 4. 节流：一段时间内，多此执行某个方法，在一段时间内只执行一次。多次发起请求，不会理会。
@@ -1344,6 +1593,31 @@ console.log(temp);
 - git reset --hard：撤销 commit 和 add，代码也回到上一次 commit 的时候
 - git commit --amend: 重新修改 commit 信息
 - git rebase：变基
+
+5. window 子对象：
+
+- document：html 的信息
+- history：浏览器访问过的 url
+- location:url 上的一系列信息
+- nagivator：浏览器的信息
+- screen:客户端屏幕信息
+
+6. 原生路由原理：hash and history
+- hash： 通过hashchange 事件监听 URL 的变化
+
+  - 通过浏览器前进后退改变 URL
+  - 通过<a>标签改变URL
+  - 通过window.location改变URL
+  这几种情况改变 URL 都会触发 hashchange 事件
+
+- history： popState监听 + 通过拦截pushState和replaceState来进行监听url的变化
+
+  - pushState 和 replaceState 两个方法，这两个方法改变 URL 的 path 部分不会引起页面刷新
+    - 我们可以拦截 pushState/replaceState的调用和<a>标签的点击事件来检测 URL 变化，所以监听 URL 变化可以实现，只是没有 hashchange 那么方便。
+  - popstate 事件
+    - 通过浏览器前进后退改变 URL 时会触发 popstate 事件
+    - 通过pushState/replaceState或<a>标签改变 URL 不会触发 popstate 事件
+
 
 # 项目
 
@@ -1412,6 +1686,15 @@ console.log(temp);
 - metaData 与 Reflect：
   - metaData 存储一个对象的描述信息。（我们用来做用户的信息存储）
 
+6. Git hooks
+- eslint校验标准：@vue/standard
+- pre-commit钩子在 git commit 执行时被触发，执行npm run precommit脚本（即lint-staged命令）；
+- lint-staged的配置，就是利用linters对暂存区的文件路径应用过滤规则，匹配的文件将执行后面配置的任务，
+  - 这里的任务就是调用项目中的eslint指令检查文件，如果报错则先自动修复--fix，最后把没有问题的代码加入暂存区git add。
+
+- 如果最终还有报错，则流程终止，无法执行 commit 操作。
+
+
 # 性能优化
 
 1. 图片
@@ -1476,6 +1759,154 @@ for (let j = 1; j < arr.length; j++) {
 }
 print(ans);
 ```
+
+4. 分糖果
+   > 有 N 个小朋友站在一排，每个小朋友都有一个评分
+   > 你现在要按以下的规则给孩子们分糖果：
+   > 每个小朋友至少要分得一颗糖果
+   > 分数高的小朋友要他比旁边得分低的小朋友分得的糖果多
+   > 你最少要分发多少颗糖果？
+
+```js
+function candy(ratings) {
+  // write code here
+  //dp[i]表示第i个小朋友获得的糖果
+  //dp[1]=1;
+  //dp[i]=max(dp[i],dp[i-1]+1);
+  //dp[i]=max(dp[i],dp[i+1]+1);
+  let len = ratings.length;
+  let arr = new Array(len).fill(1);
+  for (let i = 1; i < len; i++) {
+    if (ratings[i] > ratings[i - 1]) {
+      arr[i] = arr[i - 1] + 1;
+    }
+  }
+  //来回两次循环
+  for (let j = len - 2; j >= 0; j--) {
+    if (ratings[j] > ratings[j + 1] && arr[j] <= arr[j + 1]) {
+      arr[j] = arr[j + 1] + 1;
+    }
+  }
+  return arr.reduce((first, curr) => {
+    return first + curr;
+  });
+}
+```
+
+5. 字符串匹配
+
+   > 牛牛有两个字符串 A 和 B,其中 A 串是一个 01 串,B 串中除了可能有 0 和 1,还可能有'?',B 中的'?'可以确定为 0 或者 1。 寻找一个字符串 T 是否在字符串 S 中出现的过程,称为字符串匹配。牛牛现在考虑所有可能的字符串 B,有多少种可以在字符串 A 中完成匹配。
+   >
+   > 例如:A = "00010001", B = "??"
+   > 字符串 B 可能的字符串是"00","01","10","11",只有"11"没有出现在字符串 A 中,所以输出 3
+
+   > 正则表达式，将？改成. 然后递归循环匹配，match，有就放入 set。
+
+```js
+let a = readline(),
+  b = readline();
+var patt = "^";
+for (let i = 0; i < b.length; i++) {
+  if (b[i] == "?") {
+    patt += ".";
+  } else {
+    patt += b[i];
+  }
+}
+var re = new RegExp(patt);
+var set = new Set();
+while (a.length > 0) {
+  var child = a.match(re);
+  if (child) {
+    set.add(child[0]);
+  }
+  a = a.substr(1);
+}
+print(set.size);
+```
+
+6. 字符反转
+
+   > 现在有一个长度为 n 的字符串，进行循环右移 k 位的操作，少对这个字符串进行几次区间反转操作能实现循环右移 k 位呢。反转操作指字符串某一区间\left[ L,R \right][l,r]内的字符反转，例如“123456”，区间[3,5]进行反转字符串变为“125436”。假设字符串每一位都不同。给定一个字符串长度 n 和循环右移次数 k，求最少反转次数。
+
+   > 输入：3,4
+   > 输出：2
+   > 例如字符串为 123 那么循环右移 4 次变为 312，用区间反转操作代替的话，就是先对[1,3]反转得到 321，再对[2,3]反转得到 312，最少进行两次反转操作
+
+   > 思路：字符串 12345678，想要进行循环右移 3 位的操作，可以执行：
+   > 先将字符串前 5 个字符进行翻转，得 54321678。
+   > 再将字符串后 3 个字符进行翻转，得 54321876。
+   > 最后将整个字符串进行翻转，得 67812345。循环右移了 3 位。
+   > **三步翻转法可以实现数组循环右移操作**
+
+   > 回到本题，根据上面所述，可以得知所有字符串的最少翻转次数小于等于 3。列出特殊情况：
+   >
+   > 如果 或者 ，不用翻转。
+   > 如果 ，那么翻转第 2 步可以省略；如果 ，那么翻转第二步可以省略。
+   > 如果 ，可以先翻转前 个字符，再翻转后 个字符。例，12345678 -> 76543218 -> 78123456。
+   > 如果 ，先翻转后 个字符，再翻转前 个字符。
+
+```js
+function solve(n, k) {
+  // write code here
+  k %= n;
+  if (n == 1 || k == 0) {
+    return 0;
+  }
+  if (n == 2) {
+    return 1;
+  }
+  if (k == 1 || n - k == 1 || k == 2 || n - k == 2) {
+    return 2;
+  }
+  return 3;
+}
+```
+
+7. 二维数组翻转
+   > 根据二维数据的 Aii 进行翻转。
+
+```js
+function demo(n, m) {
+  let arr = [
+    [1, 2, 3],
+    [4, 5, 6],
+  ];
+  if (m > n) {
+    for (let i = n; i < m; i++) {
+      arr.push([]);
+    }
+  }
+  console.log(arr);
+  for (let i = 0; i < n; i++) {
+    for (let j = 0; j < i; j++) {
+      [arr[i][j], arr[j][i]] = [arr[j][i], arr[i][j]];
+    }
+  }
+  if (m > n) {
+    for (let i = 0; i < n; i++) {
+      for (let j = n; j < m; j++) {
+        [arr[i][j], arr[j][i]] = [arr[j][i], arr[i][j]];
+      }
+    }
+  }
+  console.log(arr);
+  for (let i = 0; i < m; i++) {
+    let res = "";
+    for (let j = 0; j < n; j++) {
+      res += arr[i][j];
+      if (j != n - 1) {
+        res += " ";
+      }
+    }
+    // print(res);
+    console.log(res);
+  }
+}
+demo(2, 3);
+```
+
+8. 寻找数字
 
 # 字节算法
 
@@ -1854,4 +2285,195 @@ function demo(s) {
 }
 ```
 
-15.
+15. 简易的模板引擎：
+
+```js
+function tpl(templateStr, arr) {
+  // write code here
+  //var reg=/\{\{\$.\}\}/g;
+  //let resArr=templateStr.match(reg);
+  if (arr.length == 0) return templateStr;
+  let temp = 0;
+  let res = templateStr.replace(/\{\{\$[0-9][0-9]*\}\}/g, function (m, m1) {
+    let num = parseInt(m.split("{{$")[1].split("}}")[0]);
+    return arr[num];
+  });
+  return res;
+}
+tpl("<div>{{$0}}{{$1}}</div>", ["好未来", "tql"]);
+//输出<di>好未来tql</div>
+```
+
+16. 二维数组回型遍历
+
+```js
+snail = function (arr) {
+  var res;
+  while (arr.length) {
+    //左到右 一整行shift
+    res = res ? res.concat(arr.shift()) : arr.shift();
+    //上到下
+    for (let i = 0; i < arr.length; i++) {
+      res.push(arr[i].pop());
+    }
+    //右到左
+    res = res.concat((arr.pop() || []).reverse());
+    //下到上
+    for (let i = arr.length - 1; i >= 0; i--) {
+      res.push(arr[i].shift());
+    }
+  }
+  return res;
+};
+```
+
+17. 合并乱序区间
+
+```js
+var merge = function (arr) {
+  if (arr.length <= 1) return arr;
+  arr.sort((a, b) => {
+    if (a[0] !== b[0]) {
+      return a[0] - b[0];
+    } else {
+      return a[1] - b[1];
+    }
+  });
+  let res = [arr[0]];
+  for (let i = 1; i < arr.length; i++) {
+    if (
+      res[res.length - 1][1] >= arr[i][0] &&
+      res[res.length - 1][1] <= arr[i][1]
+    ) {
+      //[1,3]和[2,4]
+      //or
+      //[1,2]和[2,4]
+      //or
+      //[1,4]和[2,4]
+      let temp = res.pop();
+      res.push([temp[0], arr[i][1]]);
+    } else {
+      //[1,3]和[4,5]
+      res.push(arr[i]);
+    }
+  }
+  return res;
+};
+merge([
+  [3, 5],
+  [1, 2],
+  [1, 3],
+  [6, 9],
+  [8, 10],
+  [11, 12],
+]);
+```
+
+18. 二维数组翻转
+
+```js
+//aii翻转
+//不一定是n*n,可能是m*n
+function tran(arr) {
+  let len1 = arr.length,
+    len2 = arr[0].length;
+  //凑够n*n
+  if (len1 < len2) {
+    for (let i = len1; i < len2; i++) {
+      arr.push([]);
+    }
+    for (let i = 0; i < len1; i++) {
+      for (let j = i; j < len2; j++) {
+        [arr[i][j], arr[j][i]] = [arr[j][i], arr[i][j]];
+      }
+    }
+  } else {
+    for (let i = 0; i < len1; i++) {
+      for (let j = 0; j < i; j++) {
+        [arr[i][j], arr[j][i]] = [arr[j][i], arr[i][j]];
+      }
+    }
+  }
+  return arr;
+}
+//顺时针旋转90
+// n*n m*n 先通过主对角线翻转，然后再每一项reverse
+function tran(arr) {
+  let len1 = arr.length,
+    len2 = arr[0].length;
+  //凑够n*n
+  if (len1 < len2) {
+    for (let i = len1; i < len2; i++) {
+      arr.push([]);
+    }
+    for (let i = 0; i < len1; i++) {
+      for (let j = i; j < len2; j++) {
+        [arr[i][j], arr[j][i]] = [arr[j][i], arr[i][j]];
+      }
+    }
+  } else {
+    for (let i = 0; i < len1; i++) {
+      for (let j = 0; j < i; j++) {
+        [arr[i][j], arr[j][i]] = [arr[j][i], arr[i][j]];
+      }
+    }
+  }
+  for (let i = 0; i < arr.length; i++) {
+    arr[i].reverse();
+  }
+  return arr;
+}
+//逆时针选择90
+// n*n m*n 先通过主对角线翻转，然后再整个arr.reverse
+function tran(arr) {
+  let len1 = arr.length,
+    len2 = arr[0].length;
+  //凑够n*n
+  if (len1 < len2) {
+    for (let i = len1; i < len2; i++) {
+      arr.push([]);
+    }
+    for (let i = 0; i < len1; i++) {
+      for (let j = i; j < len2; j++) {
+        [arr[i][j], arr[j][i]] = [arr[j][i], arr[i][j]];
+      }
+    }
+  } else {
+    for (let i = 0; i < len1; i++) {
+      for (let j = 0; j < i; j++) {
+        [arr[i][j], arr[j][i]] = [arr[j][i], arr[i][j]];
+      }
+    }
+  }
+  arr.reverse();
+  return arr;
+}
+
+//水平翻转
+function tran(arr) {
+  let len = arr.length;
+  for (let i = 0; i < len; i++) {
+    arr[i].reverse();
+  }
+  return arr;
+}
+//垂直翻转
+function tran(arr) {
+  return arr.reverse();
+}
+```
+
+19. 手写bind函数
+```js
+//function a(){ console.log(this.xxx) };
+//a.bind(obj,1,2)
+Function.prototype.bind=function(obj){
+  var args=Array.prototype.slice.call(arguments,1);
+  var fn=this;
+  return function(){
+    var params=Arrat.prototype.slice.call(arguments);
+    fn.apply(obj,args.concat(params));
+    //也可以用扩展运算符，ES6
+  }
+}
+```
