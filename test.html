@@ -5,13 +5,32 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Document</title>
-    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <!-- <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script> -->
+    <style>
+      @keyframes toRight {
+        0%{
+          left:0px;
+        }
+        50%{
+          left:100px;
+          transform: scale(0.5,0.5);
+        }
+        100%{
+          left:0;
+        }
+      }
+      .demo{
+        position: absolute;
+        animation: toRight 2s cubic-bezier(0,0,.5,.5) infinite;
+      }
+    </style>
   </head>
   <body>
-    <div id="blog-post-demo">
+    <div style="width: 100px;height: 100px;background-color: green;" class="demo">xxx</div>
+    <!-- <div id="blog-post-demo">
       <xx></xx>
-    </div>
-    <script>
+    </div> -->
+    <!-- <script>
       Vue.component("xx",{
           data:function(){
               return {aaa:"222"};
@@ -38,6 +57,6 @@
           }
       });
       console.log(app);
-    </script>
+    </script> -->
   </body>
 </html>

@@ -263,22 +263,22 @@
 // }
 // console.log(demo("abcdefgabasdabcde"));
 
-const name="abc"
-const obj={
-  name:"ccc",
-  say:function(){
-    console.log(this.name);
-  }
-}
-const f=obj.say
-f()
+// const name="abc"
+// const obj={
+//   name:"ccc",
+//   say:function(){
+//     console.log(this.name);
+//   }
+// }
+// const f=obj.say
+// f()
 
-const a=1
-const o={
-  a:12,
-  fn:function(){
-    console.log(this.a);
-  }
-}
-const fn=o.fn
-fn()
+// const a=1
+// const o={
+//   a:12,
+//   fn:function(){
+//     console.log(this.a);
+//   }
+// }
+// const fn=o.fn
+// fn()

@@ -8,7 +8,7 @@
   - 3： 支持流式通信（streaming 模式），而 restful api 似乎很少这么用，视频流等都会用专门的协议 HLS，RTMP 等。
     （http2.0 的知识点）
 
-2.  从输入 URL 到页面展示，这中间发生了什么？
+2.  从输入 url 到页面展示，这中间发生了什么？
 
 - 1. URL 解析
 
@@ -65,6 +65,7 @@
 
 - http 缓存
   - 强缓存：判断是否有 `Cache-controller`（no-cache\no-store）、`Expire`、过没过期；
+  - 发起 http 请求时，浏览器根据这个请求头信息进行判断是否命中强缓存。
   - 协商缓存：与服务器端对比资源是否进行更新，没更新返回 304，有更新 200，（`E-tag`，`Last-Modified`）
   - Cache-controll(http1.1):no-cache、no-store、max-age（xx 秒）、public/private、must-revalidate
   - Expires(http1.0):时间点
@@ -172,6 +173,72 @@ nginx 的反向代理接口：`nginx.config`
   - 不要使用 table 布局，可能很小的一个小改动都会造成整个 table 的重新布局
   - 用 opacity 替代 visibility
 
+14. localstorage 超过 5m 怎么存储：
+
+- localStorage 最大容量 5M 的意思是每一个域名下的 localStorage 容量是 5M，假如现在 a.com 域名下 localstorage 存不下了，我们可以使用 iframe 创建 b.com 域框架（子页面）用于存储 a.com 剩下的数据。然后使用 postMessage 读写数据。
+- window.postMessage() 方法可以安全地实现跨源通信。通常，对于两个不同页面的脚本，只有当执行它们的页面位于具有相同的协议（通常为 https），端口号（443 为 https 的默认值），以及主机 (两个页面的模数 Document.domain 设置为相同的值) 时，这两个脚本才能相互通信。window.postMessage() 方法提供了一种受控机制来规避此限制，只要正确的使用，这种方法就很安全。
+
+15. xss csrf
+
+- xss：跨站脚本攻击
+  - 反射型：xss 代码出现在 url 中，作为输入提交到服务器端，服务器解析后相应内容和脚本一起传回浏览器，然后浏览器解析执行 xss 代码
+  - 存储型：提交的代码会存储在服务器端，下次获取后在前端执行
+  - DOMxss：触发 XSS 靠的是浏览器端的 DOM 解析，完全是客户端的事情
+- 防御：
+
+  - cookie
+    - http-only(只允许 http 或 https 获取 cookie，js 无法读取 cookie)
+    - secure-only(只允许 https 读取，cookie)
+    - host-only(只允许主机域名与 domain 设置完全一致时才能访问 cookie)
+  - header 设置：x-xss-protection：0 禁用 xss 保护，1 启用 xss 保护。
+  - html 编码：unicodeComponent
+
+- csrf：跨站请求伪造：攻击者盗用身份，以你的名义发送恶意请求
+  - 劫持 cookie，在受害者不知情的前提下发送伪造请求给服务器。
+- 防御（header）：
+  - 验证 referer（记录 host 地址）
+  - samesite:管制哪些跨站申请能够携带 cookie
+    - Strict:同站才能发送 cookie；
+    - lax：安全的跨站申请才能发送 cookie；
+      - 浏览器把哪些跨站申请看作平安的申请：同步的 GET 申请，form 的 get 形式提交，window.open()等等。
+    - none；
+  - token 验证
+
+16. https 握手
+
+- 用户在浏览器输入一个 https 网址，连接到服务器的 443 端口。
+- 服务器返回给浏览器证书（证书里面包含公钥）
+- 浏览器首先会验证公钥是否有效，比如颁发机构，过期时间等等，如果发现异常，则会弹出一个警示框，提示证书存在的问题。如果证书没有问题，那么就生成一个随机值。然后用公钥对这个随机值进行非对称加密。（这个随机值就是以后进行对称加密的公钥）
+- 服务器拿私钥解密出对称加密的公钥。然后以后就用这个公钥进行对称加密。
+- 浏览器就可以用这个公钥进行解密和加密了。
+
+17. websocket和http2的服务器推送有什么区别
+- ws需要握手建立连接，同时没缓存
+- http2的推送是有缓存的，推送功能不需要握手
+
+
+# 计算机网络
+1. 五层结构 and 七层结构
+- 五层：物理层、数据链路层、网络层、传输层、应用层
+- OSI七层：物理层、数据链路层、网络层、传输层、会话层、表示层、应用层
+
+2. 各协议
+应用层：DNS HTTP
+传输层：TCP UDP
+网络层：ICMP IP IGMP
+数据链路层：RARP
+
+3. tcp 的拥塞控制：
+- 滑动窗口机制、
+发送窗口（SWND）、接受窗口（RWND）和拥塞窗口（CWND）。其中MAX（发送窗口）=MIN（CWND，RWND）。主要包括两个过程：
+
+（1）收到序列i-1及一下的序列，期望收到i及以后的序列。
+
+（2）确认同意对方发送一个窗口w共j个字节，其序列号为i至i+j-1。
+- 慢启动机制、
+- 拥塞避免机制、
+- 快速重传与恢复。
+
 # HTML&CSS
 
 1. 清除浮动：父元素因为子级元素浮动引起的内部高度为 0 的问题
@@ -265,32 +332,89 @@ nginx 的反向代理接口：`nginx.config`
 - 伪类：（单冒号）hover、active、focus、
 - 伪元素：（双冒号）before、after、selection、placeholder
 
-10. table布局的优缺点
+10. table 布局的优缺点
+
 - 缺点
-  - table 比其他html标签占更多的字节。造成下载时间延迟，占用服务器更多的流量资源（代码冗余）。
+  - table 比其他 html 标签占更多的字节。造成下载时间延迟，占用服务器更多的流量资源（代码冗余）。
   - table 会阻挡浏览其渲染引擎的渲染顺序，会延迟页面的生成速度，让用户等待时间更久。
-  - 灵活性差，一旦设计确定，后期很难通过CSS让它展现新的面貌。
+  - 灵活性差，一旦设计确定，后期很难通过 CSS 让它展现新的面貌。
   - 不利于搜索引擎抓取信息，直接影响到网站的排名。
-- 优点：1.兼容性好2.容易上手
+- 优点：1.兼容性好 2.容易上手
 
-11. flex: 1 0 auto：flex-grow、flex-shrink、flex-basis的缩写：
+11. flex: 1 0 auto：flex-grow、flex-shrink、flex-basis 的缩写：
+
 - flex-grow:放大比例
-  - 默认为0：即使存在剩余空间，也不会放大；
+  - 默认为 0：即使存在剩余空间，也不会放大；
   - 1：等分剩余空间（自动放大占位）；
-  - n：n倍
+  - n：n 倍
 - flex-shrink:缩小比例
-  - 默认为1，即 如果空间不足，该项目将缩小；
-  - 为0：空间不足时，该项目不会缩小；
-  - n:n倍
+  - 默认为 1，即 如果空间不足，该项目将缩小；
+  - 为 0：空间不足时，该项目不会缩小；
+  - n:n 倍
 - flex-basis: 分配多余空间的时候，计算主轴空间
-  - 默认auto: 项目原本大小
 
-- 例子：flex:1,即放大比例为1，占据整个内容。常用作自适应布局。
+  - 默认 auto: 项目原本大小
 
-12. justify-content和align-item的区别
-- justify-content:项目在主轴上的对齐方式（假设我flex-direction：row(横)的，那么我就是在水平上的对齐方式，（宽度））
+- 例子：flex:1,即放大比例为 1，占据整个内容。常用作自适应布局。
+
+12. justify-content 和 align-item 的区别
+
+- justify-content:项目在主轴上的对齐方式（假设我 flex-direction：row(横)的，那么我就是在水平上的对齐方式，（宽度））
 - align-item:项目在交叉轴的对齐方式（高度）
 - aligin-content:定义多跟轴线的对齐方式，就是多行对齐方式，如果只有单行，则不生效。
+
+13. 动画的快慢算法：
+
+- 贝塞尔曲线:cubic-bezier
+- strps(步数，[start|end])
+- ease-in 慢到快
+- ease-out 快到慢
+- ease-in-out 慢到快到慢
+- linear 线性
+- ease 平滑
+
+14. clientWidth、offsetWidth、scrollWidth
+- clientWidth = width+左右padding
+- clientTop = boder.top(上边框的宽度)
+- clientLeft = boder.left(左边框的宽度)
+
+- offsetWidth = width + 左右padding + 左右border
+- offsetTop：当前元素 上边框 外边缘 到 最近的已定位父级（offsetParent） 上边框 内边缘的 距离。如果父级都没有定位，则分别是到body 顶部 和左边的距离
+- offsetLeft：当前元素 左边框 外边缘 到 最近的已定位父级（offsetParent） 左边框 内边缘的 距离。如果父级都没有定位，则分别是到body 顶部 和左边的距离
+
+- scrollWidth：获取指定标签内容层的真实宽度（可视区域宽度+被隐藏区域宽度）
+
+14. window 子对象：
+
+- document：html 的信息
+- history：浏览器访问过的 url
+- location:url 上的一系列信息
+- nagivator：浏览器的信息
+- screen:客户端屏幕信息
+
+
+15. h5新出的api
+
+- 拖拽
+
+(1)ondragstart：源对象开始被拖动
+
+(2)ondrag：源对象被拖动过程中(鼠标可能在移动也可能未移动)
+
+(3)ondragend：源对象被拖动结束
+
+拖动源对象可以进入到上方的目标对象可以触发的事件：
+
+(1)ondragenter：目标对象被源对象拖动着进入
+
+(2)ondragover：目标对象被源对象拖动着悬停在上方
+
+(3)ondragleave：源对象拖动着离开了目标对象
+
+(4)ondrop：源对象拖动着在目标对象上方释放/松手
+
+- 存储
+- 获取当前地理信息nagivatorr.geolocation.watchPosition(successCallback, errorCallback)
 
 
 # JavaScript
@@ -370,6 +494,21 @@ nginx 的反向代理接口：`nginx.config`
   - `{}`除外,对于 Object 类型来说，`var a={b:123}`可以用 instanceof 去判断。
   - String、Date、Number 等的都是基于 Object 衍生的，原型链可以解释。所以对于 Number 等类型来说，instanceof Object 均为 true -`!mycar instanceof Car`和`!(mycar instanceof Car)`不一样，`!mycar`对隐式转换成 boolean 值。
   - 详情参考 MDN：https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Operators/instanceof
+
+```js
+// instanceof是通过原型链判断的， 在A的原型链中层层查找，是否有原型等于B.prototype
+//如果不是，A就继续往原型链里面找，找到顶端null。任然不等于B.prototype,返false。
+function instance(left, right) {
+  left = left.__proto__;
+  right = right.prototype;
+  while (true) {
+    console.log(left);
+    if (left == null) return false;
+    if (left === right) return true;
+    left = left.__proto__;
+  }
+}
+```
 
 - isNaN():判断是不是 NaN 类型
 
@@ -500,33 +639,30 @@ for (let item of obj) {
   - 原理：
 
   ```js
-  Peomise.all = function (values) {
+  Promise.all = (arr) => {
     return new Promise((resolve, reject) => {
-      let results = []; // 结果数组
+      let result = [];
       let i = 0;
       let processData = (value, index) => {
         results[index] = value;
-        // 当成功的个数 和 当前的参数个数相等就把结果抛出去
-        if (++i === values.length) {
+        if (++i == arr.length) {
           resolve(results);
         }
       };
-      for (let i = 0; i < values.length; i++) {
-        let current = values[i]; // 拿到数组中每一项
-        // 判断是不是一个promise
-        if (
-          (typeof current === "object" && current !== null) ||
-          typeof current == "function"
-        ) {
-          // 如果是promise
-          if (typeof current.then == "function") {
-            // 就调用这个promise的then方法，把结果和索引对应上,如果任何一个失败了返回的proimise就是一个失败的promise
-            current.then((y) => {
-              processData(y, i);
-            }, reject);
-          } else {
-            processData(current, i);
-          }
+      function isPromise(obj) {
+        return (
+          !!obj && //有实际含义的变量才执行方法，变量null，undefined和''空串都为false
+          (typeof obj === "object" || typeof obj === "function") && // 初始promise 或 promise.then返回的
+          typeof obj.then === "function"
+        );
+      }
+      for (let i = o; i < arr.length; i++) {
+        let current = arr[i];
+        //判断是不是promise
+        if (isPromise(current)) {
+          current.then((y) => {
+            processData(y, i);
+          }, reject);
         } else {
           processData(current, i);
         }
@@ -535,76 +671,78 @@ for (let item of obj) {
   };
   ```
 
+````
+
 - `Promise.race`: 接受 promise 对象数组，谁跑的快，则执行谁的回调函数。
 - 例题：
 
-  - `promise.race`使用情况：发送一个请求，限制时间为 2 秒
+ - `promise.race`使用情况：发送一个请求，限制时间为 2 秒
 
-  ```js
-  function request() {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve("来自服务器的message");
-      }, Math.random() * 5000);
-    });
-  }
-  function resolve() {
-    //code here
-    let second = new Promise((resolve, reject) => {
-      setTimeout(() => {
-        reject("超时");
-      }, 2000);
-    });
-    let arr = [request(), second];
-    return Promise.race();
-  }
-  resolve()
-    .then((res) => console.log(res))
-    .catch((err) => console.log(err));
-  ```
+ ```js
+ function request() {
+   return new Promise((resolve) => {
+     setTimeout(() => {
+       resolve("来自服务器的message");
+     }, Math.random() * 5000);
+   });
+ }
+ function resolve() {
+   //code here
+   let second = new Promise((resolve, reject) => {
+     setTimeout(() => {
+       reject("超时");
+     }, 2000);
+   });
+   let arr = [request(), second];
+   return Promise.race();
+ }
+ resolve()
+   .then((res) => console.log(res))
+   .catch((err) => console.log(err));
+````
 
-  - 实现一个批量请求函数 multiRequest(urls,maxNum):
-    - 最大并发数 maxNum
-    - 每当有一个请求返回，就留下一个空位，可以增加新的请求
-    - 所有请求完成后，结果按照 urls 里面的顺序依次打出
+- 实现一个批量请求函数 multiRequest(urls,maxNum):
+  - 最大并发数 maxNum
+  - 每当有一个请求返回，就留下一个空位，可以增加新的请求
+  - 所有请求完成后，结果按照 urls 里面的顺序依次打出
 
-  ```js
-  function multiRequest(urls = [], maxNum) {
-    const len = urls.length;
-    const result = new Array(len).fill(false);
-    let count = 0;
-    return new Promise((resolve, reject) => {
-      //count来限制并发个数
-      while (count < maxNum) {
-        next();
+```js
+function multiRequest(urls = [], maxNum) {
+  const len = urls.length;
+  const result = new Array(len).fill(false);
+  let count = 0;
+  return new Promise((resolve, reject) => {
+    //count来限制并发个数
+    while (count < maxNum) {
+      next();
+    }
+    function next() {
+      let current = count++;
+      if (current >= len) {
+        !result.includes(false) && resolve(result);
+        return;
       }
-      function next() {
-        let current = count++;
-        if (current >= len) {
-          !result.includes(false) && resolve(result);
-          return;
-        }
-        const url = urls[current];
-        console.log(`开始请求`);
-        fetch(url)
-          .then((res) => {
-            result[current] = res;
-            console.log("完成");
-            if (current < len) {
-              next();
-            }
-          })
-          .catch((err) => {
-            console.log("结束");
-            result[current] = err;
-            if (current < len) {
-              next();
-            }
-          });
-      }
-    });
-  }
-  ```
+      const url = urls[current];
+      console.log(`开始请求`);
+      fetch(url)
+        .then((res) => {
+          result[current] = res;
+          console.log("完成");
+          if (current < len) {
+            next();
+          }
+        })
+        .catch((err) => {
+          console.log("结束");
+          result[current] = err;
+          if (current < len) {
+            next();
+          }
+        });
+    }
+  });
+}
+```
 
 11. 判断数组的方法：
 
@@ -726,6 +864,22 @@ function curry(){
 
 18. 扩展 js 的 String 等对象：prototype 扩展
 
+19. 闭包：函数外部调用到函数内部的变量，产生了闭包
+
+20. defer 和 async:
+
+- async: 加载与解析都是异步的
+- defer: 加载是异步的，然后加载完之后解析是同步的。
+
+21. 异步编程方式：
+
+- 回调函数
+- 事件监听
+- 发布订阅
+- promise
+- generator
+- async/await
+
 # ES6
 
 1. 箭头函数
@@ -773,119 +927,235 @@ foo::bar(...arguments); // 等同于  bar.apply(foo, arguments);
 3. 对象数组的解构赋值
 4. 模板字符串
 5. map and set
-6. proxy and reflect
+6. 扩展运算符
+7. proxy and reflect
+
 - proxy：在目标对象之前加一层“拦截”，外界对该对象的访问，都必须先通过这层拦截，重写 get、set 方法，同时，this 会指向 proxy 对象
 - reflect：将 object 内部的一些方法（object.defineProperty），通常是 proxy 拦截 target 的时候，内部调用对应的 reflect 方法，保证原生行为能够正常执行。
 
-7. 遍历方式 and 迭代器
+8. 遍历方式 and 迭代器
+
 - 常规遍历方式：
-    - for 循环
-    - for in 循环
-    - while 循环
-    - for of 循环
+
+  - for 循环
+  - for in 循环
+  - while 循环
+  - for of 循环
 
 - 函数式编程
-    - forEach
-    - map
-    - reduce
-    - Objects.keys
 
-- for of 循环只能遍历具备iterator规范的。（即如果有Symbol.iterator标志）
-    - 数组
-    - 部分类数组：arguments/NodeList/HTMLCollection
-    - Set/Map
-    - String
+  - forEach
+  - map
+  - reduce
+  - Objects.keys
 
-**注意：**普通对象不具备iterator规范的标志Symbol.iterator
+- for of 循环只能遍历具备 iterator 规范的。（即如果有 Symbol.iterator 标志）
+  - 数组
+  - 部分类数组：arguments/NodeList/HTMLCollection
+  - Set/Map
+  - String
+
+**注意：**普通对象不具备 iterator 规范的标志 Symbol.iterator
+
 - 迭代器：
+
   - 标志：Symbol.iterator
   - 遍历器对象本质上，就是一个指针对象
-  - 每一次调用next方法，返回一个包含value和done两个属性的对象
+  - 每一次调用 next 方法，返回一个包含 value 和 done 两个属性的对象
 
 - 生成器函数模拟迭代器
-``` js
-// 这里用生成器函数得出结果返回一个Symbol.iterator
-function *fn(){
-    yield 1;
-    yield 2;
-}
-let itor=fn();//生成器函数返回的结果是一个迭代器；拥有next方法，执行next方法可以一次遍历数据结构中的每一项的值 ->数据结构具备Symbol.iterator属性，说明其是可以被迭代的。
 
-console.log(itor.next())//->{value:1,done:false}
-console.log(itor.next())//->{value:2,done:false}
-console.log(itor.next())//->{value:undefined,done:true}
+```js
+// 这里用生成器函数得出结果返回一个Symbol.iterator
+function* fn() {
+  yield 1;
+  yield 2;
+}
+let itor = fn(); //生成器函数返回的结果是一个迭代器；拥有next方法，执行next方法可以一次遍历数据结构中的每一项的值 ->数据结构具备Symbol.iterator属性，说明其是可以被迭代的。
+
+console.log(itor.next()); //->{value:1,done:false}
+console.log(itor.next()); //->{value:2,done:false}
+console.log(itor.next()); //->{value:undefined,done:true}
 ```
+
 <img src="./imgs/iterator.png"></img>
 
 ```js
-function *fn(){
-    let x=yield 1;
-    console.log(x);//->10 不是yield的返回值，是执行next方法传递进来的值。
-    yield 2;
+function* fn() {
+  let x = yield 1;
+  console.log(x); //->10 不是yield的返回值，是执行next方法传递进来的值。
+  yield 2;
 }
-let itor=fn();
-console.log(itor.next())//->{value:1,done:false},这一步从头开始，到第一个yield结束。
-console.log(itor.next(10))//->{value:2,done:false}，这一步解决第一个yield，即yield 1那里，其实是把1换成了10，然后赋值给x遇到yield 2停止。
-console.log(itor.next())//->{value:undefined,done:true}执行yield 2.然后结束。
+let itor = fn();
+console.log(itor.next()); //->{value:1,done:false},这一步从头开始，到第一个yield结束。
+console.log(itor.next(10)); //->{value:2,done:false}，这一步解决第一个yield，即yield 1那里，其实是把1换成了10，然后赋值给x遇到yield 2停止。
+console.log(itor.next()); //->{value:undefined,done:true}执行yield 2.然后结束。
 ```
 
 - 普通对象迭代方法：
+
 ```js
 let obj = {
-    0: 10,
-    1: 20,
-    2: 30,
-    3: 40,
-    length: 4,
-    //第一种方法，调用其他已有迭代器的标志
-    // [Symbol.iterator]: Array.prototype[Symbol.iterator]
-    //第二种方法：手写一个
-    [Symbol.iterator]: function () {
-        let self = this,
-            index = 0;
+  0: 10,
+  1: 20,
+  2: 30,
+  3: 40,
+  length: 4,
+  //第一种方法，调用其他已有迭代器的标志
+  // [Symbol.iterator]: Array.prototype[Symbol.iterator]
+  //第二种方法：手写一个
+  [Symbol.iterator]: function () {
+    let self = this,
+      index = 0;
+    return {
+      next() {
+        if (index > self.length - 1) {
+          return {
+            value: undefined,
+            done: true,
+          };
+        }
         return {
-            next() {
-                if (index > self.length - 1) {
-                    return {
-                        value: undefined,
-                        done: true
-                    };
-                }
-                return {
-                    value: self[index++],
-                    done: false
-                };
-            }
+          value: self[index++],
+          done: false,
         };
-    }
+      },
+    };
+  },
 };
 for (let item of obj) {
-    console.log(item);
+  console.log(item);
 }
 ```
 
-8. 异步编程解决方案: 生成器 and Promise
+9. 异步编程解决方案: 生成器 and Promise
+
 - 生成器：
-  - 执行Generator函数会返回一个迭代器对象，拥有next方法，执行next方法可以一次遍历数据结构中的每一项的值
-  - 函数体内部使用yield语句，暂停执行的标记
+
+  - 执行 Generator 函数会返回一个迭代器对象，拥有 next 方法，执行 next 方法可以一次遍历数据结构中的每一项的值
+  - 函数体内部使用 yield 语句，暂停执行的标记
 
 - Promise
+
   - promise 有 3 种状态：pending、fulfilled 或 rejected。状态改变只能是 pending->fulfilled 或者 pending->rejected，状态一旦改变则不能再变。
   - 构造函数中的 resolve 或 reject 只有第一次执行有效，多次调用没有任何作用
+
     - 呼应代码二结论：promise 状态一旦改变则不能再变。
-  
+
   - promise 可以链式调用。
-  
+
     - 提起链式调用我们通常会想到通过 return this 实现，不过 Promise 并不是这样实现的。
     - promise 每次调用 .then 或者 .catch 都会返回一个新的 promise，从而实现了链式调用。
-  
-  - .then 或 .catch 返回的值不能是 promise 本身，否则会造成死循环。
-  
-  - .then 可以接收两个参数，第一个是处理成功的函数，第二个是处理错误的函数。.catch 是 .then 第二个参数的简便写法，
-    - 但是它们用法上有一点需要注意：.then 的第二个处理错误的函数捕获不了第一个处理成功的函数抛出的错误，而后续的 .catch 可以捕获之前（then里面的）的错误。
 
-- Promise.all：promise对象数组所有状态都变成了resolve or reject，才会去调用then。
-- Promise.race：竞赛，有一个promise对象状态改变，就调用then。
+  - .then 或 .catch 返回的值不能是 promise 本身，否则会造成死循环。
+
+  - .then 可以接收两个参数，第一个是处理成功的函数，第二个是处理错误的函数。.catch 是 .then 第二个参数的简便写法，
+    - 但是它们用法上有一点需要注意：.then 的第二个处理错误的函数捕获不了第一个处理成功的函数抛出的错误，而后续的 .catch 可以捕获之前（then 里面的）的错误。
+
+- Promise.all：promise 对象数组所有状态都变成了 resolve or reject，才会去调用 then。
+
+```js
+Promise.all = (arr) => {
+  return new Promise((resolve, reject) => {
+    let result = [];
+    let i = 0;
+    let processData = (value, index) => {
+      results[index] = value;
+      if (++i == arr.length) {
+        resolve(results);
+      }
+    };
+    function isPromise(obj) {
+      return (
+        !!obj && //有实际含义的变量才执行方法，变量null，undefined和''空串都为false
+        (typeof obj === "object" || typeof obj === "function") && // 初始promise 或 promise.then返回的
+        typeof obj.then === "function"
+      );
+    }
+    for (let i = o; i < arr.length; i++) {
+      let current = arr[i];
+      //判断是不是promise
+      if (isPromise(current)) {
+        current.then((y) => {
+          processData(y, i);
+        }, reject);
+      } else {
+        processData(current, i);
+      }
+    }
+  });
+};
+```
+
+- Promise.race：竞赛，有一个 promise 对象状态改变，就调用 then。
+
+- async and await:generator 的语法糖
+  - 返回一个 promise 对象
+  - await 后面不是 promise 对象，也会被转成 resolve 的 promise 对象
+  - async 原理：将生成器函数和自动执行器放在一个函数里
+  - 简化代码
+
+10. 继承：
+
+- 原型链继承：将子类的 prototype 指向父类的实例，从而子类的原型也指向了父类；
+- 优点：继承子类构造函数，父类构造函数，父类原型
+- 缺点：
+  - 继承单一
+  - 新实例无法向父类构造函数传参。
+  - 所有新实例都会共享父类实例的属性。（原型上的属性是共享的，一个实例修改了原型属性，另一个实例的原型属性也会被修改！）
+
+```js
+Son.prototype = new Father();
+let son = new Son();
+son.__proto__ == Father;
+```
+
+- 构造函数继承：用 call apply 将父类构造函数引入子类函数，父类构造函数自执行
+- 优点
+  - 只继承了父类构造函数的属性，没有继承父类原型的属性。
+  - 实例可以向父类构造函数传参。
+  - 不共享父类实例
+- 缺点：
+  - 只能继承父类构造函数的属性
+
+```js
+function Father() {
+  this.a = 11;
+}
+function Son() {
+  Father.call(this, "");
+  this.b = 12;
+}
+var son = new Son();
+son.a == 11; //true;
+```
+
+- 组合继承：
+- 优点：
+  - 两种继承的优点
+  - 调用了两次父类构造函数（耗内存），子类的构造函数会代替原型上的父类构造函数。
+
+```js
+function Son() {
+  Father.call(this, "");
+  this.b = 12;
+}
+Son.prototype = new Father();
+let son = new Son();
+```
+
+- 原型式继承：
+
+```js
+function content(obj) {
+  function F() {}
+  F.prototype = obj;
+  return new F();
+}
+var f = new Father();
+var f2 = content(f);
+console.log(f2.a);
+```
 
 # React
 
@@ -1071,20 +1341,34 @@ e.preventDefault：阻止默认事件，不会阻止事件传递。
 - 为什么要有这模式：目的、职责划分、分层，借鉴后端思想。对于前端而言就是如何将数据同步到页面上；
 - 自动映射数据到视图上；(简化隐藏 controller)
 
+- model：数据层 js 对象
+- view：视图层
+- viewmodel：逻辑层
+
 2. Vue2 以及 Vue3 响应式数据的理解
 
 - 响应式数据：
+
   - vue2:
+
     1. `object.defineProperty`：对于一个对象，通过遍历、递归，将对象中的属性重写 get、set 方法。
-    2. 发布订阅模式
+    2. 发布订阅模式：一对多，多订阅者监听一个对象，对象更新之后，通过通知调度中心，进行通知订阅者。
+       2-1. 触发依赖收集。
        2-1. 通过重写我们的 get、set 之后，对于第一次调用 get 方法的时候，将 watcher 放入我们的 dep 数组中(触发依赖收集)，
        2-2. 调用 set 方法的时候，依次将我们的 dep 中的 watcher 执行
        2-3. 每个属性都会有一个 dep
     3. 数组是通过重写数组方法来实现
+
+    - 重写数组方法（push、shift、pop、splice、unshift、sort、reverse）函数劫持
+    - 数组中如果是对象数据类型，也会进行递归挟持
+    - 数组的索引和长度变化是无法监控到的
+
     4. 多层对象是通过递归来实现劫持
+
   - vue3:
     1. 判断取值是不是对象，是则进行代理 proxy,取到某个值的时候，再进行代理(懒代理)；
     2. 兼容性不好
+    3. proxy 天生支持数组劫持。
 
 ```js
 // 构造函数调用init方法->initdata->observe->数组、对象分开,深度递归->defineRative->object.defineProperty
@@ -1127,13 +1411,6 @@ function vue2() {
 }
 ```
 
-3. vue 中如何检测数组变化
-
-- 重写数组方法（push、shift、pop、splice、unshift、sort、reverse）函数劫持
-- 数组中如果是对象数据类型，也会进行递归挟持
-- 数组的索引和长度变化是无法监控到的
-- vue3 的 proxy 天生支持数据劫持。
-
 ```js
 let state = [1, 2, 3];
 let originalArray = Array.prototype;
@@ -1163,129 +1440,9 @@ setTimeout(() => {
 - 当属性发生修改时，会触发 watcher 更新 `dep.notify()`
 - 当一个组件在渲染时，会触发 get 方法、那么就会把这个组件放到这个属性的 dep 中。也就是 dep 中存放的所有依赖这个属性的组件。当改变这个属性，会触发 set，这个时候循环调用 dep 中的所有项，来重新渲染这些依赖的组件。
 
-5. Vue 中模板编译原理
+5. vue 的生命周期
 
-- template 转成 ast 树（template 循环，正则匹配，换成一个对象，children 等等属性）
-- ast 树生成 render 函数（标记，diff 优化，render 函数是 with 语法，取值方便）
-- vue-loader 中用到 vue-template-compiler
-
-<!-- - template->ast 树（parseHTML（对 template 进行循环，把摸板换成 ast 树，ast 树是一个对象，有 children 等等，有点像虚拟 DOM，但属性不一样）->对 ast 树进行标记、标记静态节点（diff 优化）（递归标记，对象里面的 static 属性：trueorfalse）->生成代码（render 函数（with 语法，取值方便），对象） -->
-
-6. Vue 生命周期
-
-- 是什么：Vue 实例从创建到销毁的过。开始创建、初始化数据、编译模板、挂载 Dom→ 渲染、更新 → 渲染、卸载等一系列过程，我们称这是 Vue 的生命周期；
-- 作用：多个事件钩子，让我们更好的在 Vue 实例的整个过程中进行控制。
-- 8 个常见的生命钩子
-  1. beforeCreate、created
-     - beforeCreate 很少用到，高级组件封装的时候会用上业务基本用不上，拿不到 props,data,function 等
-     - created: 第一个能拿到 props、data、function 等，发 ajax 请求。
-  2. beforeMounted,mounted
-     - beforeMounted 基本用不上，
-     - mounted：真实 DOM 已经存在了，echarts，百度地图等真实 DOM 操作。
-  3. beforeUpdate,updated
-     - beforeUpdate：更新操作
-     - updated：不能做更新操作，容易出现死循环。
-  4. beforeDestory,destoryed
-     - beforeDestory：清除定时器
-- 3 个不常见的生命周期
-  1. actived & deactived：配合 keep-alive 缓存组件的时候才存在
-  2. errorCaptured:捕获错误
-
-7. Vue 生命周期钩子是如何实现的
-
-- vue.options 里面会放置了全局的所有属性，生命周期钩子函数也在里面
-
-- 例如 beforeCreate,每个生命周期钩子属性都是一个数组，所有的对应生命周期的回调函数都维护成一个数组，然后依次执行。
-
-- vue.options 会放置了全局的所有属性（例如 vue.mixin 中的东西，data 的东西）
-
-```js
-vue.mixin({
-  beforeCreate("sss");
-})
-const vm=new Vue({
-  el:"#app",
-  beforeCreate("ss222");
-})
-```
-
-8. keep-live 原理：
-
-- 缓存，LRU 算法，
-- 缓存的是虚拟 DOM
-
-9. Vue.mixin 的使用场景和原理
-
-- 共享数据的方案：mixin：抽离公共的业务逻辑，组件初始化时调用 mergeOptions 方法进行合并（放到 Vue.options），采用策略模式针对不同的属性进行合并。数据冲突，采用就近原则。
-- 命名冲突问题，依赖问题，数据来源问题。
-
-9. Vue 组件 data 为什么必须是个函数
-
-- 为什么不能是对象：在 Vue.extend 的时候，创建构造函数，extend 会合并对象，把父类的 data 和子类的 data 进行合并，放在 Vue 实例中（只有一个 Vue 实例，全局 new 了一个 Vue）
-- 组件的渲染流程：Vue.component--内部调用-->Vue.extend（继承，传入 options，生成组件构造函数，即子类）->子类->new 子类
-
-10. nextTick 在哪里使用
-
-- 是在下次 DOM 更新循环结束之后执行的延迟回调
-- 是异步的，但是将内容维护到一个数组里面，最终按顺序执行（属性更新为 a—>nextTick(获取值为 a，而不是 b)->属性更新为 b）（数据是异步更新，所以 nextTick 为了拿到新数据，它也是异步更新）
-- 用于更新后的 DOM
-- 第一次是异步，第二次往数组里面放，最后执行 flushCallBack 方法循环数组执行。
-
-11. computed 和 watcher 的区别（功能不同，实现原理相同都是 watcher（dep 发布订阅模式））
-
-- computed 和 watch 都是基于 Watcher 来实现的（computed 是取值时才执行（写成一个函数，然后 defineProperty 对应的属性的时候，进行调用该函数（类似 get 函数）），watch 是（数据一改，则直接执行对应的方法））
-- 访问代理函数，代理函数里面通过 watcher.dirty 判断是取缓存还是重新计算。
-- dirty 在哪里设置的：在 watcher 设置的
-- computed 是具备缓存的，依赖的值不发生变化，则不会重新计算
-- watch 是监控值的变化，一变就会执行回调
-
-- 用户(就是我们写的 watch)、组件（template 中的）、计算属性三种 watcher
-
-12. Vue.set 是怎么实现的（vm.$set(vm.user,age,11) || vm.$set(vm.user,1,11)）（可以用 set 去更新数组索引）
-
-- 数组和对象都增加了 dep 属性，dep 会进行收集，收集的是 watcher
-- 如果是数组，调用 splice
-- 如果是对象，defineReative 将这个属性设置成响应式
-
-13. vue 为什么需要虚拟 dom
-
-- 真实 DOM 的抽象
-- 直接操作 DOM 性能低但 js 层的操作效率高，可以将 DOM 操作转化为对象操作，最终通过 diff 算法比对差异进行更新 DOM，减少了对真实 DOM 的操作。
-- 虚拟 DOM 不依赖真实平台环境，从而可以实现跨平台。
-
-14. vue 的 diff
-
-- 平级比较，不考虑跨级比较的情况。内部采用深度递归的方式+双指针进行比较。
-- 先比较是否相同节点，key tag；
-- 相同节点比较属性，并复用老节点。
-- 比较儿子节点，考虑老节点和新节点的情况。
-- 优化比较，头头，尾尾，头尾，尾头；
-- vue3 中采用最长递增子序列来实现 diff 优化
-
-15. 粒度过细，更新不精准。
-
-16. 组件传值
-
-- props & $emit
-- $children & $parent 获取子组件和父组件的对象
-- $ref 获取特定的子组件的 dom
-- eventbus: 创建一个单独的 js 文件，需要就引入 eventbus.$emit()，需要接受消息就eventbus.$on
-- $attr & $listener:解决多级子组件的传递问题：a->b->c b通过使用$attr 传递 a 的值到 c，$listener 监听子组件中数据变化，传递给父父组件。
-- project & inject :兄弟传值，类似于 react 的 context
-
-17.
-18.
-
-19. Vue 的 DOM 更新是同步还是异步？
-
-- 初次渲染是同步，更新是异步
-- 为什么是异步：每次读取数据的时候都要更新，会造成很多不必要的性能浪费
-- 原理：每次的更新操作都调用 nextTick 讲异步任务加入列队；
-  - 整体利用的是一个发布订阅；每一次的 nextTick 执行都是把对应的回调函数放到一个数组里面，然后同步代码执行完成之后，异步函数（能用微任务就用微任务、不能就用宏仁务）进行执行数组里面的回调函数
-
-20. vue 的生命周期
-
-- 定义：创建 Vue 实例到实例销毁的过程。
+- 定义：创建 Vue 实例到实例销毁的过程。开始创建、初始化数据、编译模板、挂载 Dom→ 渲染、更新 → 渲染、卸载等一系列过程，我们称这是 Vue 的生命周期
 - 某一阶段想执行的代码，放入对应的钩子函数中。
 - 8 个常用的钩子函数
   - beforeCreate：高级组件封装的时候可能会用到，一般业务用不上；this 相关属性拿不到（props、data、methods）
@@ -1297,25 +1454,198 @@ const vm=new Vue({
   - destoryed：定时器清除
 - 3 个不常用的
   - activated & deactivated：keep-alive 组件缓存的时候会执行的生命周期；
-    - keep-alive:LRU 缓存；
+    - keep-alive:LRU 缓存；（最近最少使用）缓存的是 DOM
+  - errorCaptured：捕获错误
+
+6. Vue 生命周期钩子是如何实现的
+
+- vue.options 里面会放置了全局的所有属性，生命周期钩子函数也在里面（例如 vue.mixin 中的东西，data 的东西）
+- 例如 beforeCreate,每个生命周期钩子属性都是一个数组，所有的对应生命周期的回调函数都维护成一个数组，然后依次执行。
+
+```js
+vue.mixin({
+  beforeCreate("sss");
+})
+const vm=new Vue({
+  el:"#app",
+  beforeCreate("ss222");
+})
+```
+
+7. Vue.mixin 的使用场景和原理
+
+- 共享数据的方案：mixin：抽离公共的业务逻辑，组件初始化时调用 mergeOptions 方法进行合并（放到 Vue.options），采用策略模式针对不同的属性进行合并。数据冲突，采用就近原则。
+- 命名冲突问题，依赖问题，数据来源问题。
+
+8. Vue 组件 data 为什么必须是个函数
+
+- 对象为引用类型，当重用组件时，由于数据对象都指向同一个 data 对象，当在一个组件中修改 data 时，其他重用的组件中的 data 会同时被修改；
+- 使用返回对象的函数，由于每次返回的都是一个新对象（Object 的实例），引用地址不同，则不会出现这个问题
+
+9. 组件的渲染流程：
+
+- Vue.component--内部调用-->Vue.extend（继承，传入 options，生成组件构造函数，即子类）->子类->new 子类
+
+10. vue 为什么需要虚拟 dom
+
+- 真实 DOM 的抽象
+- 直接操作 DOM 性能低但 js 层的操作效率高，可以将 DOM 操作转化为对象操作，最终通过 diff 算法比对差异进行更新 DOM，减少了对真实 DOM 的操作。
+- 虚拟 DOM 不依赖真实平台环境，从而可以实现跨平台。
+
+11. nextTick 在哪里使用
+
+- 是在下次 DOM 更新循环结束之后（渲染完之后）执行的延迟回调
+
+- 是异步的，但是将内容维护到一个数组里面，最终按顺序执行
+  （属性更新为 a—>nextTick(获取值为 a，而不是 b)->属性更新为 b）
+  （数据是异步更新，所以 nextTick 为了拿到新数据，它也是异步更新）
+
+- 用于更新后的 DOM
+
+- 第一次是异步，第二次往数组里面放，最后执行 flushCallBack 方法循环数组执行。
+
+12. computed 和 watcher 的区别（功能不同，实现原理相同都是 watcher（dep 发布订阅模式））
+
+- 功能：
+  - computed 是具备缓存的，依赖的值不发生变化，则不会重新计算
+  - watch 是监控值的变化，一变就会执行回调
+- 原理：
+  - computed 和 watch 都是基于 Watcher 来实现的
+    - computed 是取值时才执行（写成一个函数，然后 defineProperty 对应的属性的时候，进行调用该函数（类似 get 函数）），
+    - watch 是（数据一改，则直接执行对应的方法），类似 set 函数。
+  - 访问代理函数，代理函数里面通过 watcher.dirty 判断是取缓存还是重新计算。
+  - dirty 在哪里设置的：在 watcher 设置的
+
+13. 发布订阅模式中的 watcher 有哪几种：
+
+- 用户(就是我们写的 watch)、组件（template 中的）、计算属性三种 watcher
+
+14. Vue.set 是怎么实现的（vm.$set(vm.user,age,11) || vm.$set(vm.user,1,11)）（可以用 set 去更新数组索引）
+
+- 数组和对象都增加了 dep 属性，dep 会进行收集，收集的是 watcher
+- 如果是数组，调用 splice
+- 如果是对象，defineReative 将这个属性设置成响应式
+
+15. vue 的 diff
+
+- 平级比较，不考虑跨级比较的情况。内部采用深度递归的方式+双指针进行比较。
+- 先比较是否相同节点，key tag；
+- 相同节点比较属性，并复用老节点。
+- 比较儿子节点，考虑老节点和新节点的情况。
+- 优化比较，头头，尾尾，头尾，尾头；
+- vue3 中采用最长递增子序列来实现 diff 优化
+
+16. 组件传值
+
+- props & $emit
+- $children & $parent 获取子组件和父组件的对象
+- $ref 获取特定的子组件的 dom
+- eventbus: 创建一个单独的 js 文件，需要就引入 eventbus.$emit()，需要接受消息就eventbus.$on
+- $attr & $listener:解决多级子组件的传递问题：a->b->c b通过使用$attr 传递 a 的值到 c，$listener 监听子组件中数据变化，传递给父父组件。
+- project & inject :兄弟传值，类似于 react 的 context
+
+17. Vue 的 DOM 更新是同步还是异步？
+
+- 初次渲染是同步，更新是异步
+- 为什么是异步：每次读取数据的时候都要更新，会造成很多不必要的性能浪费
+- 原理：每次的更新操作都调用 nextTick 讲异步任务加入列队；
+  - 整体利用的是一个发布订阅；每一次的 nextTick 执行都是把对应的回调函数放到一个数组里面，然后同步代码执行完成之后，异步函数（能用微任务就用微任务、不能就用宏仁务）进行执行数组里面的回调函数
+
+18. 自定义指令：
+
+- 对普通 DOM 元素进行底层操作（如 focus）
+- 用法：`Vue.directive("focus",{ inserted:(el)=>{ el.focus() } } )`
+- 钩子函数：
+
+  - bind: 只调用一次，初始化
+  - inserted: 被绑定的元素插入父节点的时候触发
+  - update: 所在的组件更新的时候调用，但是可能发生在其子 VNode 更新之前。指令的值可能发生了改变，也可能没有。
+
+    - 可以通过参数来判断
+    - 参数：el,binding,vnode,oldnode
+    - 除了 el 之外，其它参数都应该是只读的
+
+  - componentUpdated：指令所在组件的 VNode 及其子 VNode 全部更新后调用
+  - unbind：解绑时调用
+
+19. `v-if`和`v-show`的区别：
+
+- v-if 在编译的过程中会被转化成三元表达式，然后不满足就不会渲染节点。因此它不是一个指令。
+- v-show 会被编译成指令，条件不足时控制样式将对应节点隐藏。内部其他指令依旧会继续执行。
+- v-if 和 v-show 都会导致重绘，而 v-if 会导致重排。v-show 不会。
+- v-if 和 v-for 不要连用。
+
+20. vue-router 有哪几种钩子函数，具体是什么及执行流程
+    答：钩子函数种类有全局守卫，路由守卫，组件守卫。
+    1、导航被触发  
+    2、在失火的组件里调用 beforeRouteLeave 守卫  
+    3、调用全局的 beforeEach 守卫  
+    4、在重用的组件里调用 beforeRouteUpdate 守卫  
+    5、在路由配置里调用 beforeEnter 守卫  
+    6、解析异步路由组件  
+    7、在被激活的组件里调用 beforeRouteEnter  
+    8、调用全局的 beforeResolve 守卫  
+    9、导航被确认  
+    10、调用全局的 afterEach 钩子  
+    11、触发 DOM 更新  
+    12、调用 beforeRouteEnter 守卫传给 next 的回调函数，创建好的组件实例会作为回调函数的参数传入。
+
+21. v-if 与 v-for 的优先级  
+    v-for 和 v-if 进行不要再同一个标签中，因为解析时先解析 v-for 再解析 v-if 如果遇到需要同时使用时可以考虑写成计算属性的方式。
+
+- 生成代码 `v-for`-> `v-if`
+- 先计算出来，再进行 v-if 的判断
+- for 循环内尽量不要绑定事件，可以用事件委托的方式。
+- vue3 相反
+
+22. 组件中的 name 选项有哪些好处及作用？  
+    可以通过名字找到对应的组件；通过名字去渲染。（递归组件）  
+    可以通过 name 属性实现缓存功能（keep-alive）  
+    可以通过 name 来识别组件（跨级组件$emit||eventbus 通信时非常重要）
+
+23. Vue 事件修饰符有哪些？其实现原理是什么？  
+    答：capture，prevent，once，stop，self。
+
+24. Vue 中模板编译原理
+
+- template 转成 ast 树（template 循环，正则匹配，换成一个对象，children 等等属性）
+- ast 树生成 render 函数（标记，diff 优化，render 函数是 with 语法，取值方便）
+- vue-loader 中用到 vue-template-compiler
+
+<!-- - template->ast 树（parseHTML（对 template 进行循环，把摸板换成 ast 树，ast 树是一个对象，有 children 等等，有点像虚拟 DOM，但属性不一样）->对 ast 树进行标记、标记静态节点（diff 优化）（递归标记，对象里面的 static 属性：trueorfalse）->生成代码（render 函数（with 语法，取值方便），对象） -->
+
+25. vue3 和 vue2 的区别
+
+- 对 typeScript 支持不友好，（所有属性都放在了 this 对象上，难以推倒组件的数据类型）
+- 大量的 API 挂载在 Vue 对象的原型上，难以实现 TreeShaking。
+- 在 vue 源码中写入跨平台代码不友好。
+- componsitionAPI，受 reactHook 启发
+- 虚拟 DOM 进行重写，对摸板的编译进行了优化操作(proxy)。
+
+26. vue优点
+- 双向绑定
+- 组件化开发
+- 虚拟DOM
 
 # Vuex
+
 1. 是什么：状态管理模式
 2. 有什么：
-  - state：存储状态（变量）
-  - getters：对数据获取之前的再次编译，可以理解为state的计算属性。我们在组件中使用 $store.getters.fun()
-  - mutations：修改状态，并且是同步的。在组件中使用$store.commit('',params)。这个和我们组件中的自定义事件类似。
-  - actions：异步操作。在组件中使用是$store.dispath('')
-  - modules：store的子模块，为了开发大型项目，方便状态管理而使用的。这里我们就不解释了，用起来和上面的一样。
+
+- state：存储状态（变量）
+- getters：对数据获取之前的再次编译，可以理解为 state 的计算属性。我们在组件中使用 $store.getters.fun()
+- mutations：修改状态，并且是同步的。在组件中使用$store.commit('',params)。这个和我们组件中的自定义事件类似。
+- actions：异步操作。在组件中使用是$store.dispath('')
+- modules：store 的子模块，为了开发大型项目，方便状态管理而使用的。这里我们就不解释了，用起来和上面的一样。
+
 3. 怎么用：
-  - 取值：$store.state.xxx
-  - 赋值：$store.commit("")
 
-4. store是怎么注册的：
-- vuex在vue 的生命周期中的初始化钩子前插入一段 Vuex 初始化代码。给 Vue 的实例注入一个 $store 的属性，从而this.$store.xxx
+- 取值：$store.state.xxx
+- 赋值：$store.commit("")
 
+4. store 是怎么注册的：
 
-
+- vuex 在 vue 的生命周期中的初始化钩子前插入一段 Vuex 初始化代码。给 Vue 的实例注入一个 $store 的属性，从而this.$store.xxx
 
 # Node
 
@@ -1357,6 +1687,18 @@ const vm=new Vue({
 - check: 处理 setImmediate 的回调。
 - close callback:执行一些回调，线程 socket 等。
 
+2. node 的全局对象：需不需要 require 引入，不需要就是全局的。
+
+- process:进程对象
+- console
+- Buffer：可以用来操作二进制数据流
+
+# TS
+
+1. js 的超集，编译为纯 js
+2. 支持面向对象的编程概念，如类、接口、继承、泛型等
+3. 它支持强类型或静态类型特性。
+
 # Webpack
 
 1. webpack 是干什么的，它都做了哪些工作
@@ -1366,7 +1708,6 @@ const vm=new Vue({
 
 2. 为什么要有 webpack，没有就不行吗
 
-- 模块化：让我们可以把复杂的程序细化为小的文件;
 - 编译时的语言如 TS 等，能够实现目前 JS 不能直接使用的特性，webpack 等帮我们进行转换成 JS 以便于浏览器识别
 - CSS 预处理器：less sass 等都可以提高我们的开发效率，webpack 可以帮我们在编译时进行处理成 CSS
 
@@ -1429,6 +1770,16 @@ const vm=new Vue({
 
 - 浏览器在用户访问页面的时候，为了加快加载速度，会对用户访问的静态资源进行存储，但是每一次代码升级或是更新，都需要浏览器去下载新的代码，最方便和简单的更新方式就是引入新的文件名称。
 - 在 webpack 中可以在 output 纵输出的文件指定 chunk hash,并且分离经常更新的代码和框架代码。通过 NameModulesPlugin 或是 HashedModuleIdsPlugin 使再次打包文件名不变。
+
+10. webpack 打包慢
+
+- 开发时期打包慢：
+  - webpack --watch
+- 放入生产的时候打包慢：
+  - Webpack.config.js 中配置了 externals,配置不用打包的模块
+  - 配置 babel：让它排除一些文件：ignore
+  - webpack.DllPlugin：动态链接库
+    - 本质上和我们 externals 是一样的，自动化提高效率
 
 # 算法
 
@@ -1603,21 +1954,27 @@ console.log(temp);
 - screen:客户端屏幕信息
 
 6. 原生路由原理：hash and history
-- hash： 通过hashchange 事件监听 URL 的变化
+
+- hash： 通过 hashchange 事件监听 URL 的变化
 
   - 通过浏览器前进后退改变 URL
-  - 通过<a>标签改变URL
-  - 通过window.location改变URL
-  这几种情况改变 URL 都会触发 hashchange 事件
+  - 通过<a>标签改变 URL
+  - 通过 window.location 改变 URL
+    这几种情况改变 URL 都会触发 hashchange 事件
 
-- history： popState监听 + 通过拦截pushState和replaceState来进行监听url的变化
+- history： popState 监听 + 通过拦截 pushState 和 replaceState 来进行监听 url 的变化
 
   - pushState 和 replaceState 两个方法，这两个方法改变 URL 的 path 部分不会引起页面刷新
-    - 我们可以拦截 pushState/replaceState的调用和<a>标签的点击事件来检测 URL 变化，所以监听 URL 变化可以实现，只是没有 hashchange 那么方便。
+    - 我们可以拦截 pushState/replaceState 的调用和<a>标签的点击事件来检测 URL 变化，所以监听 URL 变化可以实现，只是没有 hashchange 那么方便。
   - popstate 事件
     - 通过浏览器前进后退改变 URL 时会触发 popstate 事件
-    - 通过pushState/replaceState或<a>标签改变 URL 不会触发 popstate 事件
+    - 通过 pushState/replaceState 或<a>标签改变 URL 不会触发 popstate 事件
 
+7. 观察者模式与发布订阅模式的区别：
+
+- 观察者模式：观察者（Observer）直接订阅（Subscribe）主题（Subject），而当主题被激活的时候，会触发（Fire Event）观察者里的事件。
+
+- 发布订阅模式：订阅者（Subscriber）把自己想订阅的事件注册（Subscribe）到调度中心（Event Channel），当发布者（Publisher）发布该事件（Publish Event）到调度中心，也就是该事件触发时，由调度中心统一调度（Fire Event）订阅者注册到调度中心的处理代码。
 
 # 项目
 
@@ -1676,7 +2033,35 @@ console.log(temp);
 
 - 每个任务需要单独 new 一个 schedule.RecurrenceRule 对象（用来处理 Cron 表达式的），不能公用。
 
-5. 装饰器 routing-controller
+5. 封装自定义 hooks
+
+- 自定义 Hooks 函数偏向于功能，而组件偏向于界面和业务逻辑
+- useEffect 进行触发更新或者是首次执行
+- useCallback or useMemo 来缓存方法或者变量。
+
+```js
+function useWinSize() {
+  const [size, setSize] = useState({
+    width: document.documentElement.clientWidth,
+    height: document.documentElement.clientHeight,
+  });
+  const onResize = useCallback(() => {
+    setSize({
+      width: document.documentElement.clientWidth,
+      height: document.documentElement.clientHeight,
+    });
+  }, []);
+  useEffect(() => {
+    window.addEventListener("resize", onResize);
+    return () => {
+      window.removeEventListener("resize", onResize);
+    };
+  }, []);
+  return size;
+}
+```
+
+6. 装饰器 routing-controller
 
 - 装饰器就是一个方法，可以注入到类、方法、属性参数上来扩展类、属性、方法、参数的功能。
 - ts 天然支持 decorator,在 tsconfig.js 里增加配置：`experimentalDecorators:true`
@@ -1686,14 +2071,15 @@ console.log(temp);
 - metaData 与 Reflect：
   - metaData 存储一个对象的描述信息。（我们用来做用户的信息存储）
 
-6. Git hooks
-- eslint校验标准：@vue/standard
-- pre-commit钩子在 git commit 执行时被触发，执行npm run precommit脚本（即lint-staged命令）；
-- lint-staged的配置，就是利用linters对暂存区的文件路径应用过滤规则，匹配的文件将执行后面配置的任务，
-  - 这里的任务就是调用项目中的eslint指令检查文件，如果报错则先自动修复--fix，最后把没有问题的代码加入暂存区git add。
+7. Git hooks
+
+- eslint 校验标准：@vue/standard
+- pre-commit 钩子在 git commit 执行时被触发，执行 npm run precommit 脚本（即 lint-staged 命令）；
+- lint-staged 的配置，就是利用 linters 对暂存区的文件路径应用过滤规则，匹配的文件将执行后面配置的任务，
+
+  - 这里的任务就是调用项目中的 eslint 指令检查文件，如果报错则先自动修复--fix，最后把没有问题的代码加入暂存区 git add。
 
 - 如果最终还有报错，则流程终止，无法执行 commit 操作。
-
 
 # 性能优化
 
@@ -1705,9 +2091,112 @@ console.log(temp);
 - 减少请求数
   - 缓存（浏览器缓存）
   - 图片 base64 编码
+  - 图片精灵图（sprite）
   - 图片懒加载（react-loadLazy）
 - 减少请求大小
   - 图片使用 webp 格式：大小缩小 30%-50%，懒加载过程中，判断是否支持 webp，后期可以优化为：服务器依据请求头是否支持 webp，支持则自动返回 webp 格式的图片。
+
+2. SSR 服务端渲染
+
+- 定义： 在服务器上把数据和模板拼接好以后发送给客户端显示
+- 优点：
+
+  1. 更好的 SEO，
+
+  - 由于搜索引擎爬虫抓取工具可以直接查看完全渲染的页面。
+  - 单页应用是根据路由，通过 ajax 异步的更新页面一个部分来实现应用效果，这样抓取工具是无法获取页面。
+
+  2. 对于缓慢的网络或运行缓慢的设备。可提供获取网页速度，有良好的用户体验。
+
+  - 单页应用在第一次加载时，需要将一个打包好（requirejs 或 webpack 打包）的 js 发送到浏览器后，才能启动应用。
+  - 在服务器端就预先完成渲染网页后，直接发送到，会更快速地看到完整的渲染的页面
+
+  3. 用 nuxt.js，简单做就是用模板引擎在 node.js 生成，然后通过 node 的中间件匹配路由，然后直接返回。
+
+- 做法：
+  - 发请求的工具需要前后端通用，可以使用 fetch + node-fetch 或 axios；
+  - 编译代码时，需要编译两份，一份 target 是 node，一份 target 是 browser，它们将在不同的环境下运行；node 这份可以编译成 es6 或再高的版本，这个取决于 node 的版本；
+  - 需要实现一个 node 服务器，根据不同的路由返回不同的页面；
+
+3. 工具：lightHouse，chrome 性能分析工具
+4. 首屏性能：
+
+- FCP: 白屏时间
+  - 首次内容绘制，标记的是浏览器渲染第一针内容 DOM 的时间点，该内容可能是文本、图像、SVG 或者 <canvas> 等元素
+  - 减少阻塞页面的静态资源
+  - 减少服务器响应的时间
+  - 骨架屏 loading
+- FMP: 首次有效绘制，标记主角元素渲染完成的时间点，主角元素可以是视频网站的视频控件，内容网站的页面框架也可以是资源网站的头图等。
+
+- LCP：最大快内容绘制时间
+  - SSR
+  - 让核心模块优先展示
+- TTI: 首次输入延迟，记录在FCP和TTI之间用户与页面交互时响应的延迟
+
+5.  节流防抖
+
+6.  打包优化：
+
+- code spliting
+  - 路由懒加载（）=>import("./chunk")
+  - commons-chunk-plugin：提取公共代码
+  - entry 把路径分成多个。
+
+7. 预加载：
+   `<link rel="preconnect" href="//s3.pstatp.com">`
+
+- preconnect
+  - 作用：提前建立好 TCP 连接
+  - 使用场景：静态资源的 CDN 域名，跨域请求的域名
+- proload
+  - 作用：高优先级预加载资源，适用于本页面要用到的资源
+  - 使用场景：需要在首屏展示的关键图片，动态加载模块（code-splitting）对应的资源
+- prefetch
+  - 作用：低优先级预加载资源，适用于下一个页面将要用到的资源
+  - 使用场景： 提前请求下一级页面及其资源，如果预加载的对象是一个页面，那这个页面应该返回相应的表示可缓存的响应头
+- prerendering
+  - 作用：与 prefetch 相似，prerendering 更适用于页面，用 prerendering 预加载页面的时候，同时也会预加载页面里的资源
+  - 使用场景：因为流量开销比较大，更适用于明确知道用户会进入某个页面的场景
+
+8. 为什么建议将修改 DOM 的操作里放到 useLayoutEffect 里，而不是 useEffect？
+
+- 减少回流、重绘
+- DOM 已经被修改，但但浏览器渲染线程依旧处于被阻塞阶段，所以还没有发生回流、重绘过程。由于内存中的 DOM 已经被修改，通过 useLayoutEffect 可以拿到最新的 DOM 节点，并且在此时对 DOM 进行样式上的修改，假设修改了元素的 height，这些修改会在步骤 11 和 react 做出的更改一起被一次性渲染到屏幕上，依旧只有一次回流、重绘的代价。
+
+9. useMemo 和 useCallback 的好处
+
+- usememo 和 useCallback 都可以通过监听特定的参数来判断是否在渲染阶段重新计算对应的数值或者是对应的函数，好处便是做到性能的优化。
+- 区别：useMemo 通常用于计算一个数值，可以是状态的改变等；而 useCallback 缓存的是函数，就比如子组件啥的，只要 props 没有改变，那么子组件就不需要刷新，使用 useCallback 可以不用让子组件刷新。
+
+# 智力题
+
+1. 烧绳子
+2. 老虎吃羊：
+   > 有 500 只老虎，1 只羊，一片草原。老虎和羊，都可以吃草活着，对，这个题中的老虎可以吃草。老虎呢，也能吃羊，不允许很多只老虎一起吃羊，只允许一只老虎吃一只羊，并且，吃完羊之后，这个老虎就会变成羊。那么问，老虎会不会吃羊？ 提示:老虎很聪明，每只老虎都很聪明。
+
+> 答：不吃
+
+- 现在只有 1 老虎，1 羊，那么这只羊会被吃吗？
+  肯定被吃了，老虎吃了羊后，变成羊，也不会有生命危险了。老虎很聪明，干嘛不吃。
+
+- 现在只有 2 老虎，1 羊，那么这只羊会被吃吗？
+  不会吃。这两只老虎都很聪明，吃了后自己变成了羊，就会被另一只老虎吃掉自己。
+
+- 现在只有 3 老虎，1 羊，那么这只羊会被吃吗？
+  吃啊，吃! 反正吃完后，变成上面的情况后没有老虎敢吃我了，我得体验体验羊肉。
+
+- 现在只有 4 老虎，1 羊，那么这只羊会被吃吗？
+  不吃，吃了后变成上面情况后，自己变成了羊，该被吃掉了。
+
+- 现在只有 5 老虎，1 羊，那么这只羊会被吃吗？
+  吃啊，吃! 反正吃完后，变成上面的情况后没有老虎敢吃我了，我得体验体验羊肉。
+
+- 现在只有 6 老虎，1 羊，那么这只羊会被吃吗？
+  不吃，吃了后变成上面情况后，自己变成了羊，该被吃掉了。
+
+偶数不吃，奇数吃。
+
+3. 
 
 # 美团算法
 
@@ -1986,6 +2475,213 @@ var trap = function (height) {
   }
   return res;
 };
+```
+
+3. 给出 n 代表生成括号的对数，请你写出一个函数，使其能够生成所有可能的并且有效的括号组合。
+<!-- 深度dfs -->
+
+```js
+var generateParenthesis = function (n) {
+  let res = [];
+  let dfs = (s, left, right) => {
+    if (left == n && right == n) return res.push(s);
+    if (left < n) dfs(s + "(", left + 1, right);
+    if (right < left) dfs(s + ")", left, right + 1);
+  };
+  dfs("", 0, 0);
+  return res;
+};
+```
+
+4. 最接近的三数之和
+
+```js
+var threeSumClosest = function (nums, target) {
+  nums.sort((a, b) => a - b);
+  let res = nums[0] + nums[1] + nums[2];
+  let n = nums.length;
+  for (let i = 0; i < n; i++) {
+    let left = i + 1;
+    let right = n - 1;
+    while (left < right) {
+      let sum = nums[i] + nums[left] + nums[right];
+      if (Math.abs(res - target) > Math.abs(sum - target)) {
+        res = sum;
+      } else if (sum > target) {
+        right--;
+      } else if (sum < target) {
+        left++;
+      } else if (sum === target) {
+        return res;
+      }
+    }
+  }
+  return res;
+};
+```
+
+5. Promise 并发个数限制
+
+```js
+//promise.all限制并发个数
+function limitedRequest(urls,maxNum){
+    const pool=[];
+    const initSize=Math.min(urls.length,maxNum);
+    for(let i=0;i<initSize;i++){
+        pool.push(run(urls.splice(0,1)));
+    }
+    function r(){
+        console.log('当前并发度：', pool.length);
+        if(urls.length===0){
+            //全部发完
+            console.log('并发请求已经全部发起');
+            return Promise.resolve();
+        }
+        return run(urls.splice(0,1));
+    }
+    function run(url){
+        // return mockFetch(url).then(r);
+        //模拟请求
+        return new Promise((resolve)=>{
+            setTimeout(()=>{
+                resolve(url);
+            },2000);
+        }).then(r);
+    }
+    Promise.all(pool).then(()=>{
+        console.log("结束");
+    });
+}
+limitedRequest([1, 2, 3, 4, 5, 6, 7, 8], 3);
+```
+
+6. 合并两个升序数组
+
+```js
+function merge(A, m, B, n) {
+  let len = m + n;
+  while (n > 0 && m > 0) {
+    if (A[m - 1] > B[n - 1]) {
+      A[--len] = A[--m];
+    } else {
+      A[--len] = B[--n];
+    }
+  }
+  while (n) {
+    A[--len] = B[--n];
+  }
+  return A;
+}
+```
+
+7. 层次遍历
+```js
+function levelOrder( root ) {
+    // write code here
+    //后序遍历,左右中，递归
+    let res=[];
+    let digui=function(root,n,r){
+        if(!root)return;
+        digui(root.left,n+1,r);
+        digui(root.right,n+1,r);
+        r[n]=r[n]||[];
+        r[n].push(root.val);
+    }
+    digui(root,0,res);
+    return res;
+}
+```
+
+8. 迭代先序遍历
+```js
+function demo(root){
+  let stack=[];
+  let res=[];
+  while(stack.length||root){
+    if(root!=null){
+      stack.push(root);
+      res.push(root.val);
+      root=root.left;
+    }else{
+      root=stack.pop();
+      root=root.right;
+    }
+  }
+  return res;
+}
+```
+
+9. 二叉树的最大路径和
+```js
+function maxPathSum( root ) {
+    // write code here
+    var maxSum=-Infinity
+    function getMax(root){
+        if(!root)return 0;
+        let leftSum=Math.max(0,getMax(root.left));
+        let rightSum=Math.max(0,getMax(root.right));
+        maxSum=Math.max(maxSum,leftSum+rightSum+root.val)
+        return Math.max(0,Math.max(leftSum,rightSum)+root.val)
+    }
+    getMax(root);
+    return maxSum;
+}
+```
+
+10. 简化路径
+>linux路径简化
+```js
+var simplifyPath = function(path) {
+    const dir=path.split("/"),stack=[]
+    for(const i of dir){
+        if(i===','||i==='')continue
+        if(i==='..'){
+            stack.length>0?stack.pop():null
+            continue
+        }
+        stack.push(i)
+    }
+    return '/'+stack.join('/');
+};
+```
+
+11. 手写jsonp
+```js
+function jsonp(url){
+  let script =document.createElement("script");
+  let uniqueName=`jsonpCallback${new Date().getTime()}`
+  script.src=`url${url.indexOf('?')>-1?'&':'?'}callback=${uniqueName}`
+  docuement.body.appendChild(script)
+  window[uniqueName]=(res)=>{
+    cb && cb(res)
+
+  }
+}
+
+ <script>
+    function handleJsonp (data) {
+      console.log('data', data)
+    }
+  </script>
+  <script src="http://localhost:3002?callback=handleJsonp"></script>
+```
+
+12. 子数组的最大累加和问题
+```js
+function maxsumofSubarray( arr ) {
+   // write code here
+    let max = 0;
+    let temp = 0;
+    for (let i = 0; i < arr.length;i++) {
+        temp = temp + arr[i];
+        temp = Math.max(temp, 0);
+        if (temp > max) {
+            max = temp
+        }
+         
+    }
+    return Math.max(temp, max);
+}
 ```
 
 # 其他家算法
@@ -2463,17 +3159,170 @@ function tran(arr) {
 }
 ```
 
-19. 手写bind函数
+19. 手写 bind 函数
+
 ```js
 //function a(){ console.log(this.xxx) };
 //a.bind(obj,1,2)
-Function.prototype.bind=function(obj){
-  var args=Array.prototype.slice.call(arguments,1);
-  var fn=this;
-  return function(){
-    var params=Arrat.prototype.slice.call(arguments);
-    fn.apply(obj,args.concat(params));
+Function.prototype.bind = function (obj) {
+  var args = Array.prototype.slice.call(arguments, 1);
+  var fn = this;
+  return function () {
+    var params = Arrat.prototype.slice.call(arguments);
+    fn.apply(obj, args.concat(params));
     //也可以用扩展运算符，ES6
+  };
+};
+```
+
+20. 手写 emit 手写 on
+
+```js
+let obj = {};
+const $on = (name, fn) => {
+  if (!obj[name]) {
+    obj[name] = [];
   }
+  obj[name].push(fn);
+};
+const $emit = (name, val) => {
+  if (obj[name]) {
+    obj[name].map((fn) => {
+      fn(val);
+    });
+  }
+};
+```
+
+21. 深度遍历 DOM 节点
+
+```js
+var arr = [];
+function DFS(root) {
+  if (root) return;
+  if (root.children.length == 0) {
+    //没有孩子
+    arr.push(root);
+    return;
+  }
+  arr.push(root);
+  for (var i = 0; i < root.children.length; i++) {
+    DFS(root.children[i]);
+  }
+}
+
+//深度优先非递归
+function traversalDFSDOM(rootDom) {
+  if (!rootDom) return;
+  var stack = [];
+  var node = rootDom;
+  while (node != null) {
+    arr.push(node);
+    if (node.children.length >= 0) {
+      for (let i = node.children.length - 1; i >= 0; i--)
+        stack.unshift(node.children[i]);
+    }
+    node = stack.shift();
+  }
+}
+```
+
+22. 复杂数组去重
+
+```js
+//[{id:2,name:'asd'},{id:3,name:'222'},{id:2,name:'asd'}]
+// 整个对象不能相同；
+function demo(arr) {
+  let obj = {};
+  return arr.filter((item, index) => {
+    return obj.hasOwnProperty(JSON.stringify(item))
+      ? false
+      : (obj[JSON.stringify(item)] = true);
+  });
+}
+// 通过id去过滤
+function demo2(arr) {
+  let obj = {};
+  return arr.reduce((pre, cur) => {
+    obj[cur.id] ? "" : (obj[cur.id] = true && pre.push(cur));
+    return pre;
+  }, []);
+}
+console.log(
+  demo([
+    { id: 2, name: "asd" },
+    { id: 3, name: "222" },
+    { id: 2, name: "asd" },
+  ])
+);
+```
+
+23. 发布订阅模式
+
+```js
+let eventEmitter = {};
+eventEmitter.list = {};
+eventEmitter.on = function (event, fn) {
+  let _this = this;
+  (_this.list[event] || (_this.list[event] = [])).push(fn);
+  return _this;
+};
+eventEmitter.emit = function () {
+  let _this = this;
+  let event = [].shift.call(arguments),
+    fns = [...this.list[event]];
+  if (!fns || fns.length === 0) {
+    return false;
+  }
+  fns.forEach((fn) => {
+    fn.apply(_this, arguments);
+  });
+  return _this;
+};
+
+eventEmitter.on("test", (content) => {
+  console.log("订阅1" + content);
+});
+eventEmitter.on("test", (content) => {
+  console.log("订阅2" + content);
+});
+eventEmitter.emit("test", "这是发布");
+```
+
+24. 深拷贝
+    三要素
+
+- 递归解决多重对象
+
+- 对象分类型讨论：Date、正则等
+
+  - typeof 对于 Date 和正则也会返回 object
+
+- 解决循环引用
+
+```js
+function isObject(obj) {
+  return (
+    Object.prototype.toString.call(obj) === "[object Object]" ||
+    Object.prototype.toString.call(obj) === "[object Array]"
+  );
+}
+function deep(source, hash = new WeakMap()) {
+  if (!isObject(source)) return source;
+  //拷贝过就返回
+  if (hash.has(source)) return hash.get(source);
+  //初始化
+  let res = Array.isArray(source) ? [] : {};
+  hash.set(source, res);
+  for (let key in source) {
+    if (Object.prototype.hasOwnProperty.call(source, key)) {
+      if (isObject(source[key])) {
+        res[key] = deep(source[key], hash);
+      } else {
+        res[key] = source[key];
+      }
+    }
+  }
+  return res;
 }
 ```

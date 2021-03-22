@@ -213,3 +213,36 @@ var a=[1,2,3];
 a.join=a.shift;
 
 if(a==1&&a==2&&a==3)console.log(1);
+
+
+//15
+const [{a:b,b:a},c,d=a]=[{a:1,b:2},1];
+console.log(a,b,c,d);
+//2 1 1 2 对于最后的d=a，也可以获取到
+
+//16
+var arr=[];
+for(var i=1;i<5;i++){
+  (function(){
+    setTimeout(function(){
+      arr.push(i);
+    },0)
+  })()
+}
+arr.push(0);
+setTimeout(()=>console.log(arr),2000);
+//[0,5,5,5,5]
+//对于自执行函数来说，是有自己的作用域，不过arr.push(i)中的i还是外部for循环里面的i，因为是var的，所以最后都是5
+
+//17
+document.addEventListener('click', function() {
+console.log(1)
+new Promise((resolve) => resolve()).then(() => {console.log(2)})
+})
+document.addEventListener('click', function() {
+console.log(3)
+new Promise((resolve) => resolve()).then(() => {console.log(4)})
+})
+console.log(5)
+//5 点击之后 1 2 3 4
+//浏览器事件是宏仁务，每个宏仁务运行完后执行对应的微任务，所以1后2。
