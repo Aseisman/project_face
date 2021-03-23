@@ -212,29 +212,33 @@ nginx 的反向代理接口：`nginx.config`
 - 服务器拿私钥解密出对称加密的公钥。然后以后就用这个公钥进行对称加密。
 - 浏览器就可以用这个公钥进行解密和加密了。
 
-17. websocket和http2的服务器推送有什么区别
-- ws需要握手建立连接，同时没缓存
-- http2的推送是有缓存的，推送功能不需要握手
+17. websocket 和 http2 的服务器推送有什么区别
 
+- ws 需要握手建立连接，同时没缓存
+- http2 的推送是有缓存的，推送功能不需要握手
 
 # 计算机网络
+
 1. 五层结构 and 七层结构
+
 - 五层：物理层、数据链路层、网络层、传输层、应用层
-- OSI七层：物理层、数据链路层、网络层、传输层、会话层、表示层、应用层
+- OSI 七层：物理层、数据链路层、网络层、传输层、会话层、表示层、应用层
 
 2. 各协议
-应用层：DNS HTTP
-传输层：TCP UDP
-网络层：ICMP IP IGMP
-数据链路层：RARP
+   应用层：DNS HTTP
+   传输层：TCP UDP
+   网络层：ICMP IP IGMP
+   数据链路层：RARP
 
 3. tcp 的拥塞控制：
+
 - 滑动窗口机制、
-发送窗口（SWND）、接受窗口（RWND）和拥塞窗口（CWND）。其中MAX（发送窗口）=MIN（CWND，RWND）。主要包括两个过程：
+  发送窗口（SWND）、接受窗口（RWND）和拥塞窗口（CWND）。其中 MAX（发送窗口）=MIN（CWND，RWND）。主要包括两个过程：
 
-（1）收到序列i-1及一下的序列，期望收到i及以后的序列。
+（1）收到序列 i-1 及一下的序列，期望收到 i 及以后的序列。
 
-（2）确认同意对方发送一个窗口w共j个字节，其序列号为i至i+j-1。
+（2）确认同意对方发送一个窗口 w 共 j 个字节，其序列号为 i 至 i+j-1。
+
 - 慢启动机制、
 - 拥塞避免机制、
 - 快速重传与恢复。
@@ -374,13 +378,14 @@ nginx 的反向代理接口：`nginx.config`
 - ease 平滑
 
 14. clientWidth、offsetWidth、scrollWidth
-- clientWidth = width+左右padding
+
+- clientWidth = width+左右 padding
 - clientTop = boder.top(上边框的宽度)
 - clientLeft = boder.left(左边框的宽度)
 
-- offsetWidth = width + 左右padding + 左右border
-- offsetTop：当前元素 上边框 外边缘 到 最近的已定位父级（offsetParent） 上边框 内边缘的 距离。如果父级都没有定位，则分别是到body 顶部 和左边的距离
-- offsetLeft：当前元素 左边框 外边缘 到 最近的已定位父级（offsetParent） 左边框 内边缘的 距离。如果父级都没有定位，则分别是到body 顶部 和左边的距离
+- offsetWidth = width + 左右 padding + 左右 border
+- offsetTop：当前元素 上边框 外边缘 到 最近的已定位父级（offsetParent） 上边框 内边缘的 距离。如果父级都没有定位，则分别是到 body 顶部 和左边的距离
+- offsetLeft：当前元素 左边框 外边缘 到 最近的已定位父级（offsetParent） 左边框 内边缘的 距离。如果父级都没有定位，则分别是到 body 顶部 和左边的距离
 
 - scrollWidth：获取指定标签内容层的真实宽度（可视区域宽度+被隐藏区域宽度）
 
@@ -392,8 +397,7 @@ nginx 的反向代理接口：`nginx.config`
 - nagivator：浏览器的信息
 - screen:客户端屏幕信息
 
-
-15. h5新出的api
+15. h5 新出的 api
 
 - 拖拽
 
@@ -414,8 +418,7 @@ nginx 的反向代理接口：`nginx.config`
 (4)ondrop：源对象拖动着在目标对象上方释放/松手
 
 - 存储
-- 获取当前地理信息nagivatorr.geolocation.watchPosition(successCallback, errorCallback)
-
+- 获取当前地理信息 nagivatorr.geolocation.watchPosition(successCallback, errorCallback)
 
 # JavaScript
 
@@ -1622,10 +1625,11 @@ const vm=new Vue({
 - componsitionAPI，受 reactHook 启发
 - 虚拟 DOM 进行重写，对摸板的编译进行了优化操作(proxy)。
 
-26. vue优点
+26. vue 优点
+
 - 双向绑定
 - 组件化开发
-- 虚拟DOM
+- 虚拟 DOM
 
 # Vuex
 
@@ -2131,7 +2135,7 @@ function useWinSize() {
 - LCP：最大快内容绘制时间
   - SSR
   - 让核心模块优先展示
-- TTI: 首次输入延迟，记录在FCP和TTI之间用户与页面交互时响应的延迟
+- TTI: 首次输入延迟，记录在 FCP 和 TTI 之间用户与页面交互时响应的延迟
 
 5.  节流防抖
 
@@ -2196,7 +2200,40 @@ function useWinSize() {
 
 偶数不吃，奇数吃。
 
-3. 
+3. 实验室有 100 个瓶子，其中有一瓶装有慢性毒药（第 3 天发作)，另外 99 瓶装有蒸馏水。请问至少需要多少只小白鼠才能在 3 天内找出哪一瓶是慢性毒药？
+
+- n 只小白鼠 t 周的时间可以从 (t+1)^n 个瓶子中检验出毒药来。
+- 对 100 瓶子进行排序 0-99，然后 2^7=128;所以有 7 位数，然后的话，就第一只老鼠就喝 1xxxxxx，第二只喝 x1xxxxx,……然后看看哪几只老鼠死了，就可以确定了。
+
+4. 用两鸡蛋在 100 层楼中找出会破掉的临界值
+
+- 如果鸡蛋无限：用二分法，最小 7 次
+- 鸡蛋只有 2 个，dp 动态规划
+  - 假设第一个鸡蛋到 k 层
+    - 不碎：继续往上+k 层；还有 2 次机会
+      - 不碎：继续往上+k 层；还有 2 次机会
+      - 碎：在 k 与 2k 之间，然后就进行 k 层的尝试
+    - 碎：下面 k 层一层层试。
+- dp[n]=min(max(i,1+dp[n−i]))(1≤i≤n)
+
+5. 25 人赛跑 5 条跑道，找出最快的 3 人
+
+- 第一步：25 个人分成 5 组，每组 5 人，分别比赛，得出每组的第一名，并对第一名进行排序，为 A1, B1, C1, D1, E1；
+- 第二步：，A1, B1, C1, D1, E1 进行一次比赛，得出第一名，假设为 A1，此时经过 6 轮比赛，得出第一名；
+- 第三步： 找第二名第三名；首先第一步中 D1, E1 排除，同时排除对应组所有成员；剩 A1, B1, C1 三组
+- 第四步： 第二名可能人员是 A2，B1； 第三名可能人员是 A2，A3, B1，B2, C1
+- 第五部： 综合第四步猜猜，A2，A3, B1，B2, C1 进行一轮比赛，得出第二名第三名，此时总共经过 7 轮比赛；
+
+6. 足够多的水和两个水杯（7L 和 17L），如何得到 9L 水
+
+- 先满 17 -7-7 剩余 3L，然后存起来，反复 3 次就可以得到 9 升了。
+
+7. 16 个球，有一个异常球，有一个天平秤，称重多少次，可以找到那个球（称重次数尽量少）
+
+- 3 次.
+  - 先分成 2 组,每组 8 个,放天平上.重的那个在哪边很容易看出来.
+  - 再在轻的那 8 个中取出 1 个,放到重的这边,凑成 9 个球；然后把这个 9 个球分成 3 组,任意选两组放到天平上：① 如果一样重,则重的那个球在另一组没过秤的那 3 个球里,② 如果不一样重,则重的那个球就在重的那一组里.
+  - 挑出这一组,重复 ⒉ 的步骤可找到那个重一点的小球.
 
 # 美团算法
 
@@ -2524,33 +2561,33 @@ var threeSumClosest = function (nums, target) {
 
 ```js
 //promise.all限制并发个数
-function limitedRequest(urls,maxNum){
-    const pool=[];
-    const initSize=Math.min(urls.length,maxNum);
-    for(let i=0;i<initSize;i++){
-        pool.push(run(urls.splice(0,1)));
+function limitedRequest(urls, maxNum) {
+  const pool = [];
+  const initSize = Math.min(urls.length, maxNum);
+  for (let i = 0; i < initSize; i++) {
+    pool.push(run(urls.splice(0, 1)));
+  }
+  function r() {
+    console.log("当前并发度：", pool.length);
+    if (urls.length === 0) {
+      //全部发完
+      console.log("并发请求已经全部发起");
+      return Promise.resolve();
     }
-    function r(){
-        console.log('当前并发度：', pool.length);
-        if(urls.length===0){
-            //全部发完
-            console.log('并发请求已经全部发起');
-            return Promise.resolve();
-        }
-        return run(urls.splice(0,1));
-    }
-    function run(url){
-        // return mockFetch(url).then(r);
-        //模拟请求
-        return new Promise((resolve)=>{
-            setTimeout(()=>{
-                resolve(url);
-            },2000);
-        }).then(r);
-    }
-    Promise.all(pool).then(()=>{
-        console.log("结束");
-    });
+    return run(urls.splice(0, 1));
+  }
+  function run(url) {
+    // return mockFetch(url).then(r);
+    //模拟请求
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve(url);
+      }, 2000);
+    }).then(r);
+  }
+  Promise.all(pool).then(() => {
+    console.log("结束");
+  });
 }
 limitedRequest([1, 2, 3, 4, 5, 6, 7, 8], 3);
 ```
@@ -2575,36 +2612,38 @@ function merge(A, m, B, n) {
 ```
 
 7. 层次遍历
+
 ```js
-function levelOrder( root ) {
-    // write code here
-    //后序遍历,左右中，递归
-    let res=[];
-    let digui=function(root,n,r){
-        if(!root)return;
-        digui(root.left,n+1,r);
-        digui(root.right,n+1,r);
-        r[n]=r[n]||[];
-        r[n].push(root.val);
-    }
-    digui(root,0,res);
-    return res;
+function levelOrder(root) {
+  // write code here
+  //后序遍历,左右中，递归
+  let res = [];
+  let digui = function (root, n, r) {
+    if (!root) return;
+    digui(root.left, n + 1, r);
+    digui(root.right, n + 1, r);
+    r[n] = r[n] || [];
+    r[n].push(root.val);
+  };
+  digui(root, 0, res);
+  return res;
 }
 ```
 
 8. 迭代先序遍历
+
 ```js
-function demo(root){
-  let stack=[];
-  let res=[];
-  while(stack.length||root){
-    if(root!=null){
+function demo(root) {
+  let stack = [];
+  let res = [];
+  while (stack.length || root) {
+    if (root != null) {
       stack.push(root);
       res.push(root.val);
-      root=root.left;
-    }else{
-      root=stack.pop();
-      root=root.right;
+      root = root.left;
+    } else {
+      root = stack.pop();
+      root = root.right;
     }
   }
   return res;
@@ -2612,40 +2651,44 @@ function demo(root){
 ```
 
 9. 二叉树的最大路径和
+
 ```js
-function maxPathSum( root ) {
-    // write code here
-    var maxSum=-Infinity
-    function getMax(root){
-        if(!root)return 0;
-        let leftSum=Math.max(0,getMax(root.left));
-        let rightSum=Math.max(0,getMax(root.right));
-        maxSum=Math.max(maxSum,leftSum+rightSum+root.val)
-        return Math.max(0,Math.max(leftSum,rightSum)+root.val)
-    }
-    getMax(root);
-    return maxSum;
+function maxPathSum(root) {
+  // write code here
+  var maxSum = -Infinity;
+  function getMax(root) {
+    if (!root) return 0;
+    let leftSum = Math.max(0, getMax(root.left));
+    let rightSum = Math.max(0, getMax(root.right));
+    maxSum = Math.max(maxSum, leftSum + rightSum + root.val);
+    return Math.max(0, Math.max(leftSum, rightSum) + root.val);
+  }
+  getMax(root);
+  return maxSum;
 }
 ```
 
 10. 简化路径
->linux路径简化
+    > linux 路径简化
+
 ```js
-var simplifyPath = function(path) {
-    const dir=path.split("/"),stack=[]
-    for(const i of dir){
-        if(i===','||i==='')continue
-        if(i==='..'){
-            stack.length>0?stack.pop():null
-            continue
-        }
-        stack.push(i)
+var simplifyPath = function (path) {
+  const dir = path.split("/"),
+    stack = [];
+  for (const i of dir) {
+    if (i === "," || i === "") continue;
+    if (i === "..") {
+      stack.length > 0 ? stack.pop() : null;
+      continue;
     }
-    return '/'+stack.join('/');
+    stack.push(i);
+  }
+  return "/" + stack.join("/");
 };
 ```
 
-11. 手写jsonp
+11. 手写 jsonp
+
 ```js
 function jsonp(url){
   let script =document.createElement("script");
@@ -2667,20 +2710,20 @@ function jsonp(url){
 ```
 
 12. 子数组的最大累加和问题
+
 ```js
-function maxsumofSubarray( arr ) {
-   // write code here
-    let max = 0;
-    let temp = 0;
-    for (let i = 0; i < arr.length;i++) {
-        temp = temp + arr[i];
-        temp = Math.max(temp, 0);
-        if (temp > max) {
-            max = temp
-        }
-         
+function maxsumofSubarray(arr) {
+  // write code here
+  let max = 0;
+  let temp = 0;
+  for (let i = 0; i < arr.length; i++) {
+    temp = temp + arr[i];
+    temp = Math.max(temp, 0);
+    if (temp > max) {
+      max = temp;
     }
-    return Math.max(temp, max);
+  }
+  return Math.max(temp, max);
 }
 ```
 
@@ -3326,3 +3369,91 @@ function deep(source, hash = new WeakMap()) {
   return res;
 }
 ```
+
+# 富途算法
+
+1. 链接：https://www.nowcoder.com/questionTerminal/8397609ba7054da382c4599d42e494f3
+   来源：牛客网
+
+现定义数组单调和为所有元素 i 的 f(i)值之和。这里的 f(i)函数定义为元素 i 左边(不包括其自身)小于等于它的数字之和。请设计一个高效算法，计算数组的单调和。
+
+给定一个数组 A 同时给定数组的大小 n，请返回数组的单调和。保证数组大小小于等于 500，同时保证单调和不会超过 int 范围。
+
+测试样例：
+[1,3,5,2,4,6],6
+返回：27
+
+```js
+function demo(arr, len) {
+  let count = 0;
+  for (let i = 1; i < len; i++) {
+    for (let j = i - 1; j >= 0; j--) {
+      if (arr[j] <= arr[i]) {
+        count += arr[j];
+      }
+    }
+  }
+  return count;
+}
+```
+
+2. 输入一个非负整数数组，把数组里所有数字拼接起来排成一个数，打印能拼接出的所有数字中最大的一个。
+   例：[30,1]
+   输出：301
+
+```js
+var minNumber = function (nums) {
+  return nums.sort((a, b) => "" + b + a - ("" + a + b)).join("");
+};
+```
+
+3. 斐波那契
+
+```js
+function f(n) {
+  if (n == 1 || n == 2) {
+    return 1;
+  }
+  return f(n - 1) + f(n - 2);
+}
+//缓存功能
+function f(n, map = {}) {
+  if (n == 1 || n == 2) {
+    map[n] = 1;
+    return 1;
+  }
+  if (!map[n]) {
+    map[n] = f(n - 1, map) + f(n - 2, map);
+  }
+  return map[n];
+}
+```
+
+4. 给定一个字符串 str，只会出现{}()[]这六种字符，请实现一个函数 isMatch(str)判断这个字符串中的括号是否是匹配的。
+
+```js
+//栈
+function isMatch(str) {
+  let stack = [];
+  for (let i = 0; i < str.length; i++) {
+    if (str[i] == "(" || str[i] == "{" || str[i] == "[") {
+      stack.push(str[i]);
+    } else if (str[i] == ")" || str[i] == "}" || str[i] == "]") {
+      let target = stack[stack.length - 1];
+      if (
+        (target == "(" && str[i] == ")") ||
+        (target == "{" && str[i] == "}") ||
+        (target == "[" && str[i] == "]")
+      ) {
+        stack.pop();
+      } else {
+        return false;
+      }
+    }
+  }
+  return !stack.length;
+}
+```
+
+5. 实现一个函数，返回一个n,m的随机数。
+Math.random，要注意的是Math.random返回的是0到1之间的随机数，包括0但是不包括1。
