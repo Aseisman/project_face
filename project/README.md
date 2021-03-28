@@ -3370,6 +3370,135 @@ function deep(source, hash = new WeakMap()) {
 }
 ```
 
+25. 链表翻转
+
+- 双指针，中间加个第三个来让两个指针过度。
+
+```js
+/**
+ * Definition for singly-linked list.
+ * function ListNode(val) {
+ *     this.val = val;
+ *     this.next = null;
+ * }
+ */
+/**
+ * @param {ListNode} head
+ * @return {ListNode}
+ */
+var reverseList = function (head) {
+  let curNode = head;
+  if (!head) {
+    return head;
+  }
+  let nextNode = head.next;
+  //翻转开始
+  curNode.next = null;
+  let thirdNode;
+  while (nextNode) {
+    thirdNode = nextNode.next;
+    nextNode.next = curNode;
+    curNode = nextNode;
+    nextNode = thirdNode;
+  }
+  return curNode;
+};
+```
+
+26. js 实现链表
+
+```js
+class Node {
+  constructor(data) {
+    this.data = data; // 节点的数据域
+    this.prev = null; // 节点的指针域
+    this.next = null; // 节点的指针域
+  }
+}
+class SingleList {
+  constructor() {
+    this.size = 0;
+    this.head = new Node("head");
+    this.currNode = "";
+  }
+  // 在单链表中寻找item元素
+  find(item) {
+    let currNode = this.head;
+
+    while (currNode && currNode.data !== item) {
+      currNode = currNode.next;
+    }
+
+    return currNode;
+  }
+  findLast() {
+    let currNode = this.head;
+
+    while (currNode.next) {
+      currNode = currNode.next;
+    }
+
+    return currNode;
+  }
+  // 在尾部添加元素
+  append(element) {
+    let newNode = new Node(element);
+    let currNode = this.findLast();
+
+    currNode.next = newNode;
+    this.size++;
+  }
+  // 向单链表中插入元素
+  insert(item, element) {
+    let itemNode = this.find(item);
+
+    if (!itemNode) {
+      // 如果item元素不存在
+      return;
+    }
+
+    let newNode = new Node(element);
+
+    newNode.next = itemNode.next; // 若currNode为最后一个节点，则currNode.next为空
+    itemNode.next = newNode;
+
+    this.size++;
+  }
+  // 在单链表中删除一个节点
+  remove(item) {
+    if (!this.find(item)) {
+      // item元素在单链表中不存在时
+      return;
+    }
+
+    // 企图删除头结点
+    if (item === "head") {
+      if (!this.isEmpty()) {
+        return;
+      } else {
+        this.head.next = null;
+        return;
+      }
+    }
+
+    let currNode = this.head;
+
+    while (currNode.next.data !== item) {
+      // 企图删除不存在的节点
+      if (!currNode.next) {
+        return;
+      }
+      currNode = currNode.next;
+    }
+
+    currNode.next = currNode.next.next;
+    this.size--;
+  }
+}
+```
+
+
+
 # 富途算法
 
 1. 链接：https://www.nowcoder.com/questionTerminal/8397609ba7054da382c4599d42e494f3
@@ -3455,5 +3584,5 @@ function isMatch(str) {
 }
 ```
 
-5. 实现一个函数，返回一个n,m的随机数。
-Math.random，要注意的是Math.random返回的是0到1之间的随机数，包括0但是不包括1。
+5. 实现一个函数，返回一个 n,m 的随机数。
+   Math.random，要注意的是 Math.random 返回的是 0 到 1 之间的随机数，包括 0 但是不包括 1。
